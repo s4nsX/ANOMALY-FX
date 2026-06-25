@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Kamera Pro • iOS 26 Liquid Glass</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      height: 100dvh;
+      width: 100vw;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      user-select: none;
+      font-weight: 400;
+      touch-action: manipulation;
+    }
+
+    #camera {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    #canvas {
+      display: none;
+    }
+
+    .liquid-glass {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+      backdrop-filter: blur(50px) saturate(220%);
+      -webkit-backdrop-filter: blur(50px) saturate(220%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 10px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .liquid-glass-dark {
+      background: rgba(20, 20, 22, 0.7);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .liquid-glass-subtle {
+      background: rgba(25, 25, 27, 0.68);
+      backdrop-filter: blur(40px) saturate(200%);
+      -webkit-backdrop-filter: blur(40px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      padding: max(12px, env(safe-area-inset-top)) 14px 0;
+      display: flex;
+      justify-content: center;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
+
+    .top-bar > * { pointer-events: all; }
+
+    .capsule-pil {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      min-height: 44px;
+      border-radius: 999px;
+    }
+
+    .top-icon {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .2s;
+    }
+
+    .top-icon:active { opacity: 0.55; transform: scale(0.92); }
+    .top-icon svg { width: 18px; height: 18px; }
+
+    .focus-ring {
+      position: fixed;
+      width: 72px;
+      height: 72px;
+      border: 1.8px solid #FFD84D;
+      border-radius: 18px;
+      pointer-events: none;
+      z-index: 15;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s;
+    }
+
+    .focus-ring.show {
+      opacity: 1;
+      animation: focusPop 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes focusPop {
+      0% { transform: translate(-50%, -50%) scale(1.2); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .grid.show { opacity: 0.2; }
+
+    .grid-v1, .grid-v2, .grid-h1, .grid-h2 {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .grid-v1 { left: 33.33%; top: 0; width: 1px; height: 100%; }
+    .grid-v2 { left: 66.66%; top: 0; width: 1px; height: 100%; }
+    .grid-h1 { top: 33.33%; left: 0; height: 1px; width: 100%; }
+    .grid-h2 { top: 66.66%; left: 0; height: 1px; width: 100%; }
+
+    .bottom {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 20;
+      padding-bottom: env(safe-area-inset-bottom, 18px);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      padding-top: 10px;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .bottom > * { pointer-events: all; }
+    .bottom.hidden { transform: translateY(100%); }
+
+    .zoom-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+      height: 44px;
+    }
+
+    .zoom-container.hidden {
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .zoom-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .zoom-circle.active {
+      background: rgba(255, 216, 77, 0.22);
+      border-color: rgba(255, 216, 77, 0.5);
+      color: #FFD84D;
+      transform: scale(1.15);
+      box-shadow: 0 0 20px rgba(255, 216, 77, 0.25);
+      font-weight: 700;
+    }
+
+    .zoom-circle:active { transform: scale(0.9); opacity: 0.7; }
+    .zoom-circle.active:active { transform: scale(1.05); }
+
+    .shutter-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      z-index: 25;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .shutter-wrap.hidden {
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .shutter {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 2.5px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.12s;
+    }
+
+    .shutter-inner {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #ffffff;
+      transition: all 0.15s;
+    }
+
+    .shutter:active { transform: scale(0.91); }
+    .shutter:active .shutter-inner { transform: scale(0.86); }
+
+    body.video-mode .shutter-inner {
+      background: #FF3B30;
+      border-radius: 10px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 2px 16px 6px;
+      gap: 10px;
+      z-index: 25;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-row.hidden {
+      opacity: 0;
+      transform: translateY(30px);
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .gallery-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s;
+      background: #000;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      flex-shrink: 0;
+    }
+
+    .gallery-btn:active { transform: scale(0.92); }
+
+    .gallery-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mode-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      max-width: 140px;
+      height: 40px;
+      padding: 3px;
+      gap: 3px;
+      border-radius: 999px;
+      background: rgba(20,20,22,.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .mode-pill {
+      flex: 1;
+      height: 34px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: rgba(255,255,255,.8);
+      font-size: 12px;
+      font-weight: 590;
+      transition: .25s;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .mode-pill.active {
+      background: rgba(255,255,255,.10);
+      color: #FFD84D;
+      font-weight: 600;
+    }
+
+    .flip-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .flip-btn:active { opacity: 0.55; transform: scale(0.92); }
+    .flip-btn svg { width: 22px; height: 22px; }
+
+    .option-popup {
+      position: fixed;
+      bottom: 50%;
+      left: 50%;
+      transform: translate(-50%, 50%) scale(0.8);
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      min-width: 400px;
+      max-width: 92vw;
+      padding: 24px 28px;
+      border-radius: 40px;
+    }
+
+    .option-popup.show {
+      opacity: 1;
+      pointer-events: all;
+      transform: translate(-50%, 50%) scale(1);
+    }
+
+    .opt-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 12px;
+      transition: all 0.2s;
+      min-width: 72px;
+      min-height: 80px;
+      justify-content: center;
+    }
+
+    .opt-item:active {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(0.94);
+      border-color: rgba(255, 216, 77, 0.3);
+    }
+
+    .opt-item svg { width: 28px; height: 28px; }
+
+    .opt-item span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      opacity: 0.8;
+    }
+
+    .opt-item.active-opt {
+      background: rgba(255, 216, 77, 0.12);
+      border-color: rgba(255, 216, 77, 0.3);
+    }
+
+    .opt-item.active-opt svg,
+    .opt-item.active-opt span { color: #FFD84D; opacity: 1; }
+
+    .modes-extended {
+      position: fixed;
+      bottom: 50%;
+      left: 50%;
+      transform: translate(-50%, 50%) scale(0.8);
+      z-index: 22;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      padding: 0 16px;
+      justify-content: center;
+    }
+
+    .modes-extended.show {
+      opacity: 1;
+      pointer-events: all;
+      transform: translate(-50%, 50%) scale(1);
+    }
+
+    .modes-extended-inner {
+      display: flex;
+      gap: 6px;
+      padding: 12px 20px;
+      margin: 0 auto;
+      background: rgba(20, 20, 22, 0.85);
+      backdrop-filter: blur(40px);
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      overflow-x: auto;
+      scrollbar-width: none;
+      max-width: 95vw;
+    }
+
+    .modes-extended-inner::-webkit-scrollbar { display: none; }
+
+    .ext-mode {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      padding: 8px 16px;
+      border-radius: 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      text-transform: uppercase;
+      min-height: 36px;
+      transition: all 0.2s;
+    }
+
+    .ext-mode:active { transform: scale(0.94); }
+    .ext-mode.active { background: rgba(255, 216, 77, 0.2); color: #FFD84D; }
+
+    .flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .flash-overlay.snap { animation: snapflash 0.35s ease-out forwards; }
+
+    @keyframes snapflash {
+      0% { opacity: 0 }
+      25% { opacity: 1 }
+      100% { opacity: 0 }
+    }
+
+    .rec-dot {
+      position: fixed;
+      top: env(safe-area-inset-top, 18px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #FF3B30;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      z-index: 25;
+      opacity: 0;
+    }
+
+    .rec-dot.on {
+      opacity: 1;
+      animation: recBlink 1.2s infinite;
+    }
+
+    @keyframes recBlink {
+      0%, 100% { opacity: 1 }
+      50% { opacity: .25 }
+    }
+
+    .timer-badge {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 96px;
+      font-weight: 200;
+      color: white;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .timer-badge.show { opacity: 1; }
+
+    .toast {
+      position: fixed;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: rgba(30, 30, 32, 0.9);
+      backdrop-filter: blur(20px);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 24px;
+      border-radius: 30px;
+      z-index: 99;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .badge-container {
+      position: fixed;
+      top: env(safe-area-inset-top, 12px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    .badge-item {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      display: none;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge-item.show { display: block; }
+    .badge-item.night { color: #FF9F0A; border-color: rgba(255, 159, 10, 0.3); }
+    .badge-item.live { color: #FFD84D; border-color: rgba(255, 216, 77, 0.3); }
+    .badge-item.hd { color: #FFD84D; border-color: rgba(255, 216, 77, 0.3); }
+    .badge-item.rec { color: #FF3B30; border-color: rgba(255, 59, 48, 0.3); }
+
+    .badge-item.rec .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #FF3B30;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: recBlink 1.2s infinite;
+    }
+
+    .gallery-panel {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-top: env(safe-area-inset-top, 20px);
+    }
+
+    .gallery-panel.show { transform: translateY(0); }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: #000;
+    }
+
+    .gallery-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .gallery-count {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 400;
+    }
+
+    .gallery-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .gallery-close:active {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(0.92);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 2px;
+      overflow-y: auto;
+      flex: 1;
+      background: #000;
+    }
+
+    .gallery-item {
+      aspect-ratio: 1;
+      overflow: hidden;
+      cursor: pointer;
+      background: #111;
+      position: relative;
+      transition: transform 0.15s;
+    }
+
+    .gallery-item:active { transform: scale(0.96); }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-item.video::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 5px;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .gallery-item.video::before {
+      content: '';
+      position: absolute;
+      bottom: 12px;
+      right: 13px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid #fff;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      z-index: 1;
+    }
+
+    .gallery-empty {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: rgba(255, 255, 255, 0.3);
+      text-align: center;
+    }
+
+    .gallery-empty .empty-icon {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 16px;
+      opacity: 0.25;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gallery-empty .empty-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: rgba(255, 255, 255, 0.4);
+    }
+
+    .gallery-empty p {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .gallery-empty span {
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .gallery-preview {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 210;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .gallery-preview.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .gallery-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .gallery-preview-close {
+      position: absolute;
+      top: max(16px, env(safe-area-inset-top));
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    .location-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(20, 20, 22, 0.96);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      z-index: 100;
+      padding: 18px 18px max(18px, env(safe-area-inset-bottom));
+      border-radius: 30px 30px 0 0;
+      color: #fff;
+      transform: translateY(100%);
+      transition: transform 0.35s ease;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .location-panel.show { transform: translateY(0); }
+
+    .location-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .close-loc {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .close-loc:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.2); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: .3s;
+      border-radius: 28px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider { background-color: #FFD84D; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .search-input,
+    .coord-input {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 12px;
+      color: #fff;
+      width: 100%;
+      margin: 8px 0;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus,
+    .coord-input:focus {
+      border-color: rgba(255, 216, 77, 0.4);
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .datetime-row {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    .datetime-input {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 12px;
+      color: #fff;
+      flex: 1;
+      transition: all 0.2s;
+    }
+
+    .datetime-input:focus {
+      border-color: rgba(255, 216, 77, 0.4);
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .datetime-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+    .map-container {
+      width: 100%;
+      height: 190px;
+      border-radius: 18px;
+      overflow: hidden;
+      margin: 10px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #map { height: 100%; width: 100%; background: #1a1a1a; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .map-select-btn {
+      background: #FFD84D;
+      border: none;
+      padding: 12px;
+      border-radius: 18px;
+      font-weight: 600;
+      flex: 1;
+      cursor: pointer;
+      color: #000;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .map-select-btn:active { transform: scale(0.96); }
+
+    .map-select-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .map-select-btn.secondary:active { background: rgba(255, 255, 255, 0.2); }
+
+    @media (max-width: 480px) {
+      .option-popup {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 18px 16px;
+        min-width: 320px;
+        border-radius: 32px;
+      }
+      .opt-item { min-width: 60px; min-height: 68px; padding: 12px 8px; }
+      .opt-item svg { width: 24px; height: 24px; }
+      .opt-item span { font-size: 10px; }
+      .zoom-circle { width: 30px; height: 30px; font-size: 11px; }
+      .zoom-container { gap: 10px; }
+      .mode-pill { font-size: 10px; }
+      .shutter { width: 66px; height: 66px; }
+      .shutter-inner { width: 52px; height: 52px; }
+      body.video-mode .shutter-inner { width: 24px; height: 24px; }
+      .gallery-btn, .flip-btn { width: 42px; height: 42px; }
+      .controls-row { padding: 2px 10px 4px; gap: 6px; }
+      .mode-selector { max-width: 150px; }
+      .capsule-pil { padding: 4px 6px; gap: 2px; }
+      .top-icon { width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+      .top-icon svg { width: 16px; height: 16px; }
+      .top-bar { padding: max(36px, env(safe-area-inset-top)) 12px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <video id="camera" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+
+  <div class="grid" id="grid">
+    <div class="grid-v1"></div><div class="grid-v2"></div>
+    <div class="grid-h1"></div><div class="grid-h2"></div>
+  </div>
+
+  <div class="focus-ring" id="focusRing"></div>
+  <div class="flash-overlay" id="flashOverlay"></div>
+  <div class="rec-dot" id="recDot"></div>
+  <div class="timer-badge" id="timerBadge"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="badge-container">
+    <div class="badge-item night" id="nightBadge">Night Mode</div>
+    <div class="badge-item live" id="liveBadge">Live</div>
+    <div class="badge-item hd" id="hdBadge">HD 48MP</div>
+    <div class="badge-item rec" id="recBadge"><span class="dot"></span>Recording</div>
+  </div>
+
+  <div class="top-bar">
+    <div class="capsule-pil liquid-glass-subtle">
+      <button class="top-icon" id="flashBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></button>
+      <button class="top-icon" id="hdBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 10v4"/><path d="M11 10v4"/><path d="M15 10v4l2 2"/></svg></button>
+      <button class="top-icon" id="nightBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="modes-extended" id="modesExt">
+    <div class="modes-extended-inner liquid-glass-dark">
+      <button class="ext-mode" data-mode="timelapse">Time-lapse</button>
+      <button class="ext-mode" data-mode="slo-mo">Slo-mo</button>
+      <button class="ext-mode" data-mode="cinematic">Cinematic</button>
+      <button class="ext-mode" data-mode="portrait">Portrait</button>
+      <button class="ext-mode" data-mode="pano">Pano</button>
+    </div>
+  </div>
+
+  <div class="option-popup liquid-glass" id="optPopup">
+    <button class="opt-item" data-opt="flash"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg><span>FLASH</span></button>
+    <button class="opt-item" data-opt="live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="4 2"/></svg><span>LIVE</span></button>
+    <button class="opt-item" data-opt="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 3"/></svg><span>TIMER</span></button>
+    <button class="opt-item" data-opt="style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg><span>STYLE</span></button>
+    <button class="opt-item" data-opt="aspect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg><span id="aspectLabel">4:3</span></button>
+    <button class="opt-item" data-opt="grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18"/><line x1="9" y1="3" x2="9" y2="21"/></svg><span>GRID</span></button>
+    <button class="opt-item" data-opt="location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2v4"/></svg><span>LOCATION</span></button>
+  </div>
+
+  <div class="gallery-panel" id="galleryPanel">
+    <div class="gallery-header">
+      <div>
+        <h2>Photos</h2>
+        <span class="gallery-count" id="galleryCount">0 photos</span>
+      </div>
+      <button class="gallery-close" id="galleryClose">✕</button>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <div class="gallery-preview" id="galleryPreview">
+    <button class="gallery-preview-close" id="previewClose">✕</button>
+    <img src="" alt="Preview" id="previewImage">
+  </div>
+
+  <div class="location-panel liquid-glass-dark" id="locationPanel">
+    <div class="location-header"><h3>Location & Watermark</h3><button class="close-loc" id="closeLocPanel">✕</button></div>
+    <div class="toggle-row"><span>Watermark Location</span><label class="switch"><input type="checkbox" id="wmToggle" checked><span class="slider"></span></label></div>
+    
+    <label style="font-size:12px;opacity:0.7;margin-top:8px;">Place Name (auto-filled)</label>
+    <input class="search-input" id="searchPlace" placeholder="Search or type place name...">
+    
+    <label style="font-size:12px;opacity:0.7;">Latitude</label>
+    <input class="coord-input" id="coordLatInput" placeholder="Latitude" value="-6.2088">
+    
+    <label style="font-size:12px;opacity:0.7;">Longitude</label>
+    <input class="coord-input" id="coordLngInput" placeholder="Longitude" value="106.8456">
+    
+    <div class="map-container"><div id="map"></div></div>
+    
+    <label style="font-size:12px;opacity:0.7;">Date & Time</label>
+    <div class="datetime-row">
+      <input class="datetime-input" id="dateInput" type="date">
+      <input class="datetime-input" id="timeInput" type="time">
+    </div>
+    
+    <div class="btn-row">
+      <button class="map-select-btn" id="selectCurrentLoc">My Location</button>
+      <button class="map-select-btn secondary" id="searchPlaceBtn">Search</button>
+    </div>
+  </div>
+
+  <div class="bottom" id="bottomArea">
+    <div class="zoom-container" id="zoomContainer">
+      <button class="zoom-circle active" data-zoom="1">1×</button>
+      <button class="zoom-circle" data-zoom="3">3×</button>
+      <button class="zoom-circle" data-zoom="5">5×</button>
+    </div>
+
+    <div class="shutter-wrap" id="shutterWrap">
+      <div class="shutter liquid-glass" id="shutterBtn">
+        <div class="shutter-inner" id="shutterInner"></div>
+      </div>
+    </div>
+
+    <div class="controls-row" id="controlsRow">
+      <button class="gallery-btn liquid-glass-dark" id="galleryBtn">
+        <img src="" id="galleryThumb" alt="Gallery" style="background:#000;">
+      </button>
+
+      <div class="mode-selector liquid-glass-dark" id="modeRow">
+        <button class="mode-pill" data-mode="video">VIDEO</button>
+        <button class="mode-pill active" data-mode="photo">PHOTO</button>
+      </div>
+
+      <button class="flip-btn liquid-glass-dark" id="flipBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.58"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    (function() {
+      const video = document.getElementById('camera');
+      const canvas = document.getElementById('canvas');
+      const shutterBtn = document.getElementById('shutterBtn');
+      const flipBtn = document.getElementById('flipBtn');
+      const flashOverlay = document.getElementById('flashOverlay');
+      const focusRing = document.getElementById('focusRing');
+      const grid = document.getElementById('grid');
+      const recDot = document.getElementById('recDot');
+      const recBadge = document.getElementById('recBadge');
+      const timerBadge = document.getElementById('timerBadge');
+      const toastEl = document.getElementById('toast');
+      const optPopup = document.getElementById('optPopup');
+      const modesExt = document.getElementById('modesExt');
+      const nightBadge = document.getElementById('nightBadge');
+      const liveBadge = document.getElementById('liveBadge');
+      const hdBadge = document.getElementById('hdBadge');
+      const locationPanel = document.getElementById('locationPanel');
+      const zoomContainer = document.getElementById('zoomContainer');
+      const shutterWrap = document.getElementById('shutterWrap');
+      const controlsRow = document.getElementById('controlsRow');
+      const galleryThumb = document.getElementById('galleryThumb');
+      const galleryPanel = document.getElementById('galleryPanel');
+      const galleryGrid = document.getElementById('galleryGrid');
+      const galleryClose = document.getElementById('galleryClose');
+      const galleryCount = document.getElementById('galleryCount');
+      const galleryPreview = document.getElementById('galleryPreview');
+      const previewImage = document.getElementById('previewImage');
+      const previewClose = document.getElementById('previewClose');
+
+      let galleryItems = [];
+
+      function updateGalleryThumb() {
+        if (galleryItems.length > 0) {
+          galleryThumb.src = galleryItems[galleryItems.length - 1].url;
+        } else {
+          galleryThumb.src = '';
+        }
+      }
+
+      function updateGalleryCount() {
+        const count = galleryItems.length;
+        galleryCount.textContent = count === 0 ? 'No photos' : count === 1 ? '1 photo' : `${count} photos`;
+      }
+
+      function renderGallery() {
+        updateGalleryCount();
+        
+        if (galleryItems.length === 0) {
+          galleryGrid.innerHTML = `
+            <div class="gallery-empty">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+              <p>No Photos Yet</p>
+              <span>Photos you take will appear here</span>
+            </div>`;
+          return;
+        }
+
+        galleryGrid.innerHTML = galleryItems.map((item, index) => `
+          <div class="gallery-item ${item.type === 'video' ? 'video' : ''}" data-index="${index}">
+            <img src="${item.url}" alt="Photo ${index + 1}" loading="lazy">
+          </div>
+        `).join('');
+
+        galleryGrid.querySelectorAll('.gallery-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const index = parseInt(item.dataset.index);
+            previewImage.src = galleryItems[index].url;
+            galleryPreview.classList.add('show');
+          });
+        });
+      }
+
+      function addToGallery(url, type = 'photo') {
+        const item = {
+          id: Date.now(),
+          url: url,
+          type: type,
+          date: new Date().toISOString()
+        };
+        galleryItems.push(item);
+        updateGalleryThumb();
+        if (galleryPanel.classList.contains('show')) {
+          renderGallery();
+        }
+      }
+
+      document.getElementById('galleryBtn').addEventListener('click', () => {
+        galleryPanel.classList.add('show');
+        renderGallery();
+      });
+
+      galleryClose.addEventListener('click', () => {
+        galleryPanel.classList.remove('show');
+      });
+
+      previewClose.addEventListener('click', () => {
+        galleryPreview.classList.remove('show');
+      });
+
+      galleryPreview.addEventListener('click', (e) => {
+        if (e.target === galleryPreview) {
+          galleryPreview.classList.remove('show');
+        }
+      });
+
+      let galleryTouchStart = 0;
+      galleryPanel.addEventListener('touchstart', (e) => {
+        galleryTouchStart = e.touches[0].clientY;
+      });
+
+      galleryPanel.addEventListener('touchmove', (e) => {
+        const delta = e.touches[0].clientY - galleryTouchStart;
+        if (delta > 80 && galleryGrid.scrollTop <= 0) {
+          galleryPanel.classList.remove('show');
+        }
+      });
+
+      let facing = 'environment', stream = null, videoTrack = null, mode = 'photo';
+      let isRecording = false, mediaRecorder = null, recordedChunks = [];
+      let flashMode = 'auto', timerSec = 0, isLive = false, showGrid = false;
+      let nightMode = false, hdEnabled = false;
+      let aspectRatios = ['4:3', '16:9', '1:1', '3:4'], aspectIdx = 0;
+      let optOpen = false, focusTimer = null, timerInterval = null, lastTouchDist = 0;
+      let currentZoom = 1, lastZoom = 1;
+      let switchingCamera = false;
+      let toastQueue = [];
+      let isToastShowing = false;
+      let map, marker;
+      let searchDebounceTimer;
+      let reverseGeocodeTimer;
+
+      function processToastQueue() {
+        if (isToastShowing || toastQueue.length === 0) return;
+        isToastShowing = true;
+        const msg = toastQueue.shift();
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => {
+          toastEl.classList.remove('show');
+          isToastShowing = false;
+          setTimeout(processToastQueue, 150);
+        }, 1600);
+      }
+
+      function showToast(msg) {
+        toastQueue.push(msg);
+        if (!isToastShowing) processToastQueue();
+      }
+
+      async function startCamera() {
+        try {
+          if (stream) { stream.getTracks().forEach(t => t.stop()); }
+          const constraints = {
+            video: { facingMode: facing, width: { ideal: hdEnabled ? 4096 : 1920 }, height: { ideal: hdEnabled ? 3072 : 1080 } },
+            audio: false
+          };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = stream;
+          videoTrack = stream.getVideoTracks()[0];
+          currentZoom = 1;
+          lastZoom = 1;
+          applyZoomSmooth(currentZoom);
+        } catch (e) {
+          try {
+            if (hdEnabled) {
+              hdEnabled = false; hdBadge.classList.remove('show');
+              document.getElementById('hdBtn').querySelector('svg').style.stroke = 'white';
+              const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 } }, audio: false });
+              stream = fallbackStream; video.srcObject = stream; videoTrack = stream.getVideoTracks()[0];
+              showToast('HD not available');
+            }
+          } catch (fallbackErr) { showToast('Camera not accessible'); }
+        }
+      }
+
+      function applyZoomSmooth(targetZoom) {
+        if (!videoTrack?.getCapabilities) return;
+        try {
+          const caps = videoTrack.getCapabilities();
+          if (!caps?.zoom) return;
+          
+          const minZoom = caps.zoom.min || 1;
+          const maxZoom = caps.zoom.max || 10;
+          const clampedZoom = Math.min(maxZoom, Math.max(minZoom, targetZoom));
+          
+          if (Math.abs(clampedZoom - lastZoom) < 0.05) return;
+          lastZoom = clampedZoom;
+          
+          videoTrack.applyConstraints({ advanced: [{ zoom: clampedZoom }] }).catch(() => {});
+          currentZoom = clampedZoom;
+        } catch (e) {
+          currentZoom = targetZoom;
+        }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && stream && !stream.getTracks().some(t => t.readyState === 'live')) startCamera();
+      });
+
+      video.addEventListener('click', e => {
+        focusRing.style.left = e.clientX + 'px'; focusRing.style.top = e.clientY + 'px';
+        focusRing.classList.remove('show'); void focusRing.offsetWidth; focusRing.classList.add('show');
+        clearTimeout(focusTimer); focusTimer = setTimeout(() => { focusRing.classList.remove('show'); }, 2500);
+        closePopup();
+      });
+
+      video.addEventListener('touchstart', e => { if (e.touches.length === 2) lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+      video.addEventListener('touchmove', e => {
+        if (e.touches.length !== 2) return;
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        const delta = (d - lastTouchDist) * 0.012;
+        if (videoTrack?.getCapabilities) {
+          try {
+            const caps = videoTrack.getCapabilities();
+            if (caps?.zoom) {
+              const cur = videoTrack.getSettings().zoom || 1;
+              const newZ = Math.min(caps.zoom.max, Math.max(caps.zoom.min, cur + delta));
+              if (Math.abs(newZ - currentZoom) > 0.1) {
+                currentZoom = newZ;
+                applyZoomSmooth(newZ);
+                updateZoomUI(newZ);
+              }
+            }
+          } catch (e) {}
+        }
+        lastTouchDist = d; e.preventDefault();
+      }, { passive: false });
+
+      function updateZoomUI(z) {
+        document.querySelectorAll('.zoom-circle').forEach(c => c.classList.remove('active'));
+        const circles = document.querySelectorAll('.zoom-circle');
+        let closest = circles[0];
+        let minDiff = Infinity;
+        circles.forEach(c => {
+          const val = parseFloat(c.dataset.zoom);
+          const diff = Math.abs(val - z);
+          if (diff < minDiff) { minDiff = diff; closest = c; }
+        });
+        if (minDiff < 2) closest.classList.add('active');
+      }
+
+      let flashCycle = ['auto', 'on', 'off'], flashIdx = 0;
+      document.getElementById('flashBtn').onclick = () => {
+        flashIdx = (flashIdx + 1) % 3; flashMode = flashCycle[flashIdx];
+        const btn = document.getElementById('flashBtn');
+        if (flashMode === 'off') btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><path d="M7 2v11h3v9l7-12h-4l4-8zM3 3l18 18"/></svg>';
+        else if (flashMode === 'on') btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#FFD84D"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>';
+        else btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>';
+        showToast('Flash: ' + (flashMode === 'auto' ? 'Auto' : flashMode === 'on' ? 'On' : 'Off'));
+      };
+
+      document.getElementById('hdBtn').onclick = () => {
+        hdEnabled = !hdEnabled; hdBadge.classList.toggle('show', hdEnabled);
+        document.getElementById('hdBtn').querySelector('svg').style.stroke = hdEnabled ? '#FFD84D' : 'white';
+        showToast(hdEnabled ? 'HD: Active' : 'HD: Off'); startCamera();
+      };
+
+      document.getElementById('nightBtn').onclick = () => {
+        nightMode = !nightMode; nightBadge.classList.toggle('show', nightMode);
+        document.getElementById('nightBtn').querySelector('svg').style.fill = nightMode ? '#FF9F0A' : 'white';
+        video.style.filter = nightMode ? 'brightness(1.4) contrast(1.1)' : '';
+      };
+
+      document.querySelectorAll('#zoomContainer .zoom-circle').forEach(c => {
+        c.onclick = () => {
+          const z = parseFloat(c.dataset.zoom);
+          document.querySelectorAll('#zoomContainer .zoom-circle').forEach(x => x.classList.remove('active'));
+          c.classList.add('active');
+          applyZoomSmooth(z);
+          currentZoom = z;
+          closePopup();
+        };
+      });
+
+      const modeRow = document.getElementById('modeRow');
+      
+      document.querySelectorAll('#modeRow .mode-pill').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          document.querySelectorAll('#modeRow .mode-pill').forEach(b => b.classList.remove('active'));
+          this.classList.add('active'); mode = this.dataset.mode;
+          const isVid = (mode === 'video' || mode === 'cinematic' || mode === 'slo-mo' || mode === 'timelapse');
+          document.body.className = isVid ? 'video-mode' : '';
+          if (isRecording) stopRecording();
+          closePopup();
+        });
+      });
+
+      let lastTapTime = 0;
+      modeRow.addEventListener('click', function(e) {
+        const currentTime = new Date().getTime();
+        const tapGap = currentTime - lastTapTime;
+        
+        if (tapGap < 300 && tapGap > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePopup();
+        }
+        lastTapTime = currentTime;
+      });
+
+      document.querySelectorAll('#modeRow .mode-pill').forEach(btn => {
+        let pillLastTap = 0;
+        btn.addEventListener('click', function(e) {
+          const currentTime = new Date().getTime();
+          const tapGap = currentTime - pillLastTap;
+          
+          if (tapGap < 300 && tapGap > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            togglePopup();
+          }
+          pillLastTap = currentTime;
+        });
+      });
+
+      let holdTimer;
+      modeRow.addEventListener('touchstart', (e) => {
+        holdTimer = setTimeout(() => {
+          modesExt.classList.toggle('show');
+          hideBottomUI(modesExt.classList.contains('show'));
+        }, 500);
+      });
+      modeRow.addEventListener('touchend', () => clearTimeout(holdTimer));
+      modeRow.addEventListener('touchmove', () => clearTimeout(holdTimer));
+
+      document.querySelectorAll('.ext-mode').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.ext-mode').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active'); mode = btn.dataset.mode;
+          document.body.className = ['cinematic','slo-mo','timelapse'].includes(mode) ? 'video-mode' : '';
+          showToast(btn.textContent.trim());
+          setTimeout(() => { modesExt.classList.remove('show'); hideBottomUI(false); }, 800);
+          closePopup();
+        };
+      });
+
+      function hideBottomUI(hide) {
+        zoomContainer.classList.toggle('hidden', hide);
+        shutterWrap.classList.toggle('hidden', hide);
+        controlsRow.classList.toggle('hidden', hide);
+      }
+
+      function togglePopup() {
+        optOpen = !optOpen; 
+        optPopup.classList.toggle('show', optOpen);
+        hideBottomUI(optOpen);
+      }
+
+      function closePopup() {
+        optOpen = false; 
+        optPopup.classList.remove('show'); 
+        modesExt.classList.remove('show'); 
+        hideBottomUI(false);
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#optPopup') && 
+            !e.target.closest('#modeRow') && 
+            !e.target.closest('#locationPanel') && 
+            !e.target.closest('#modesExt') && 
+            !e.target.closest('#bottomArea') && 
+            !e.target.closest('#galleryPanel') && 
+            !e.target.closest('#galleryPreview')) {
+          closePopup();
+        }
+      });
+
+      document.querySelectorAll('.opt-item').forEach(item => {
+        item.onclick = (e) => {
+          e.stopPropagation(); 
+          const opt = item.dataset.opt;
+          if (opt === 'flash') { 
+            flashIdx = (flashIdx + 1) % 3; 
+            flashMode = flashCycle[flashIdx]; 
+            item.classList.toggle('active-opt', flashMode !== 'auto'); 
+            showToast('Flash: ' + (flashMode === 'auto' ? 'Auto' : flashMode === 'on' ? 'On' : 'Off')); 
+          }
+          else if (opt === 'live') { 
+            isLive = !isLive; 
+            item.classList.toggle('active-opt', isLive); 
+            liveBadge.classList.toggle('show', isLive); 
+            showToast('Live: ' + (isLive ? 'Active' : 'Off')); 
+          }
+          else if (opt === 'timer') { 
+            const timers = [0, 3, 10]; 
+            const curIdx = timers.indexOf(timerSec); 
+            timerSec = timers[(curIdx + 1) % 3]; 
+            item.classList.toggle('active-opt', timerSec > 0); 
+            showToast('Timer: ' + (timerSec === 0 ? 'Off' : timerSec + 's')); 
+          }
+          else if (opt === 'style') showToast('Style: Standard');
+          else if (opt === 'aspect') { 
+            aspectIdx = (aspectIdx + 1) % aspectRatios.length; 
+            document.getElementById('aspectLabel').textContent = aspectRatios[aspectIdx]; 
+            item.classList.toggle('active-opt', aspectIdx !== 0); 
+            showToast('Ratio: ' + aspectRatios[aspectIdx]); 
+          }
+          else if (opt === 'grid') { 
+            showGrid = !showGrid; 
+            grid.classList.toggle('show', showGrid); 
+            item.classList.toggle('active-opt', showGrid); 
+          }
+          else if (opt === 'location') { 
+            locationPanel.classList.add('show'); 
+            initMap(); 
+            closePopup(); 
+          }
+        };
+      });
+
+      shutterBtn.onclick = () => {
+        closePopup();
+        if (document.body.classList.contains('video-mode') || ['video','cinematic','slo-mo','timelapse'].includes(mode)) { 
+          isRecording ? stopRecording() : startRecording(); 
+          return; 
+        }
+        timerSec > 0 ? startTimer() : capturePhoto();
+      };
+
+      function startTimer() {
+        let count = timerSec; 
+        timerBadge.textContent = count; 
+        timerBadge.classList.add('show');
+        clearInterval(timerInterval); 
+        timerInterval = setInterval(() => {
+          count--; 
+          if (count <= 0) { 
+            clearInterval(timerInterval); 
+            timerBadge.classList.remove('show'); 
+            capturePhoto(); 
+          } else timerBadge.textContent = count;
+        }, 1000);
+      }
+
+      function capturePhoto() {
+        if (flashMode === 'on' || flashMode === 'auto') { 
+          flashOverlay.classList.remove('snap'); 
+          void flashOverlay.offsetWidth; 
+          flashOverlay.classList.add('snap'); 
+        }
+        
+        const vw = video.videoWidth || 1920;
+        const vh = video.videoHeight || 1080;
+        canvas.width = vw;
+        canvas.height = vh;
+        
+        const ctx = canvas.getContext('2d');
+        if (facing === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+        ctx.drawImage(video, 0, 0);
+        
+        if (document.getElementById('wmToggle').checked) {
+          const lat = document.getElementById('coordLatInput').value || '-6.2088';
+          const lng = document.getElementById('coordLngInput').value || '106.8456';
+          const placeName = document.getElementById('searchPlace').value.trim();
+          const dateVal = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
+          const timeVal = document.getElementById('timeInput').value || new Date().toTimeString().slice(0, 5);
+          
+          const [y, m, d] = dateVal.split('-');
+          const formattedDate = `${d}/${m}/${y}`;
+          
+          const baseSize = Math.round(vw * 0.022);
+          const fontSize = Math.max(14, Math.min(baseSize, 48));
+          const smallFontSize = Math.round(fontSize * 0.75);
+          const padding = Math.round(fontSize * 0.7);
+          
+          ctx.textBaseline = 'bottom';
+          ctx.textAlign = 'left';
+          
+          // Gunakan nama tempat yang sudah diisi (otomatis dari reverse geocoding)
+          const displayPlace = placeName || 'Unknown Location';
+          const lines = [];
+          lines.push({ text: displayPlace.toUpperCase(), size: fontSize, weight: '700' });
+          lines.push({ text: `${lat}, ${lng}`, size: smallFontSize, weight: '500' });
+          lines.push({ text: `${formattedDate}  ${timeVal}`, size: smallFontSize, weight: '400' });
+          
+          const totalHeight = lines.reduce((sum, l, i) => sum + (i === 0 ? fontSize : smallFontSize) * 1.35, 0) + padding;
+          const maxWidth = vw * 0.92;
+          
+          let maxTextWidth = 0;
+          lines.forEach(line => {
+            ctx.font = `${line.weight} ${line.size}px -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif`;
+            const w = ctx.measureText(line.text).width;
+            if (w > maxTextWidth) maxTextWidth = w;
+          });
+          const boxWidth = Math.min(maxTextWidth + padding * 2.5, maxWidth);
+          const boxX = padding;
+          const boxY = vh - padding - totalHeight;
+          
+          const bgGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + totalHeight + padding * 0.3);
+          bgGrad.addColorStop(0, 'rgba(0, 0, 0, 0.6)');
+          bgGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+          ctx.fillStyle = bgGrad;
+          ctx.beginPath();
+          ctx.roundRect(boxX, boxY, boxWidth, totalHeight + padding * 0.3, fontSize * 0.35);
+          ctx.fill();
+          
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(boxX + padding * 0.5, boxY);
+          ctx.lineTo(boxX + boxWidth - padding * 0.5, boxY);
+          ctx.stroke();
+          
+          let currentY = vh - padding;
+          lines.forEach((line) => {
+            ctx.font = `${line.weight} ${line.size}px -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillText(line.text, boxX + padding * 1.2, currentY);
+            currentY -= line.size * 1.35;
+          });
+        }
+        
+        const url = canvas.toDataURL('image/jpeg', 0.95);
+        addToGallery(url, 'photo');
+        
+        const a = document.createElement('a'); 
+        a.download = `photo-${Date.now()}.jpg`; 
+        a.href = url; 
+        a.click();
+        showToast('Photo saved');
+      }
+
+      function startRecording() {
+        if (!stream) return; 
+        recordedChunks = [];
+        try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' }); } 
+        catch (e) { mediaRecorder = new MediaRecorder(stream); }
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' }); 
+          const url = URL.createObjectURL(blob);
+          addToGallery(url, 'video');
+          const a = document.createElement('a'); 
+          a.href = url; 
+          a.download = `video-${Date.now()}.webm`; 
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          showToast('Video saved'); 
+          recBadge.classList.remove('show');
+        };
+        mediaRecorder.start(200); 
+        isRecording = true; 
+        recDot.classList.add('on'); 
+        recBadge.classList.add('show'); 
+        showToast('Recording...');
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        isRecording = false; 
+        recDot.classList.remove('on'); 
+        recBadge.classList.remove('show');
+      }
+
+      flipBtn.onclick = async () => {
+        if (switchingCamera) return;
+        switchingCamera = true;
+        flipBtn.style.transition = 'transform 0.35s'; 
+        flipBtn.style.transform = 'rotateY(180deg)';
+        try {
+          facing = facing === 'user' ? 'environment' : 'user';
+          await startCamera();
+        } finally {
+          setTimeout(() => { flipBtn.style.transform = ''; }, 180);
+          switchingCamera = false;
+        }
+      };
+
+      // Fungsi reverse geocoding untuk mendapatkan alamat lengkap
+      function reverseGeocode(lat, lng) {
+        clearTimeout(reverseGeocodeTimer);
+        reverseGeocodeTimer = setTimeout(() => {
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: { "Accept": "application/json" }
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.display_name) {
+              document.getElementById('searchPlace').value = data.display_name;
+              showToast('Address updated');
+            }
+          })
+          .catch(() => {});
+        }, 800);
+      }
+
+      function initMap() {
+        if (map) {
+          map.invalidateSize();
+          return;
+        }
+        const lat = parseFloat(document.getElementById('coordLatInput').value) || -6.2088;
+        const lng = parseFloat(document.getElementById('coordLngInput').value) || 106.8456;
+        
+        map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+        }).addTo(map);
+        
+        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        
+        marker.on('dragend', function(e) {
+          const pos = marker.getLatLng();
+          document.getElementById('coordLatInput').value = pos.lat.toFixed(6);
+          document.getElementById('coordLngInput').value = pos.lng.toFixed(6);
+          reverseGeocode(pos.lat, pos.lng);
+        });
+        
+        map.on('click', function(e) {
+          marker.setLatLng(e.latlng);
+          document.getElementById('coordLatInput').value = e.latlng.lat.toFixed(6);
+          document.getElementById('coordLngInput').value = e.latlng.lng.toFixed(6);
+          reverseGeocode(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Reverse geocode untuk lokasi awal
+        reverseGeocode(lat, lng);
+      }
+
+      function updateMapFromInputs() {
+        const lat = parseFloat(document.getElementById('coordLatInput').value) || -6.2088;
+        const lng = parseFloat(document.getElementById('coordLngInput').value) || 106.8456;
+        if (map && marker) {
+          marker.setLatLng([lat, lng]);
+          map.setView([lat, lng], map.getZoom());
+          reverseGeocode(lat, lng);
+        }
+      }
+
+      document.getElementById('coordLatInput').addEventListener('change', updateMapFromInputs);
+      document.getElementById('coordLngInput').addEventListener('change', updateMapFromInputs);
+      document.getElementById('closeLocPanel').onclick = () => locationPanel.classList.remove('show');
+      
+      document.getElementById('selectCurrentLoc').onclick = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('coordLatInput').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('coordLngInput').value = pos.coords.longitude.toFixed(6);
+            updateMapFromInputs();
+            reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+            showToast('Current location used');
+          }, () => showToast('Failed to get location'));
+        } else {
+          showToast('Geolocation not supported');
+        }
+      };
+      
+      document.getElementById('searchPlaceBtn').onclick = () => {
+        const query = document.getElementById('searchPlace').value.trim();
+        if (!query) { showToast('Enter place name'); return; }
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`, {
+            headers: { "Accept": "application/json" }
+          })
+            .then(r => r.json()).then(data => {
+              if (data.length > 0) {
+                document.getElementById('coordLatInput').value = parseFloat(data[0].lat).toFixed(6);
+                document.getElementById('coordLngInput').value = parseFloat(data[0].lon).toFixed(6);
+                document.getElementById('searchPlace').value = data[0].display_name;
+                updateMapFromInputs();
+                showToast('Location found');
+              } else showToast('Place not found');
+            }).catch(() => showToast('Search failed'));
+        }, 500);
+      };
+
+      startCamera();
+      updateGalleryThumb();
+      updateGalleryCount();
+      renderGallery();
+      const now = new Date();
+      document.getElementById('dateInput').value = now.toISOString().split('T')[0];
+      document.getElementById('timeInput').value = now.toTimeString().slice(0, 5);
+    })();
+  </script>
+</body>
+</html>
