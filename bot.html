@@ -1,0 +1,5491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>XAUUSDT · GOD'S EYE v4.2</title>
+<style>
+/* ═══════════ CSS VARIABLES ═══════════ */
+:root {
+  --bg: #000;
+  --panel: #0a0a0a;
+  --panel2: #101010;
+  --panel3: #151515;
+  --line: #222;
+  --line2: #151515;
+  --amber: #ffb000;
+  --amber-d: #7a5200;
+  --amber-l: #ffd166;
+  --green: #00ff88;
+  --red: #ff3860;
+  --green-bg: rgba(0,255,136,.06);
+  --red-bg: rgba(255,56,96,.06);
+  --cyan: #00d4ff;
+  --purple: #b06aff;
+  --yellow: #ffd60a;
+  --orange: #ff8c00;
+  --pink: #ff66cc;
+  --vwap: #00ffff;
+  --grey: #a0a0a0;
+  --tg: #2AABEE;
+  --txt: #dcdcdc;
+  --sub: #888;
+  --dim: #555;
+}
+
+/* ═══════════ RESET ═══════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overscroll-behavior: none; }
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font: 12px/1.4 ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
+  padding-bottom: 40px;
+  overflow-x: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.warn { color: var(--yellow); }
+
+/* ═══════════ HEADER ═══════════ */
+.hdr {
+  position: sticky; top: 0; z-index: 50;
+  background: linear-gradient(180deg, #0e0e0e, #000);
+  border-bottom: 1px solid var(--amber-d);
+}
+.hdr-inner { padding: 6px 12px; }
+.hdr-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.brand { color: var(--amber); font-weight: 700; font-size: 13px; letter-spacing: 1.2px; white-space: nowrap; }
+.brand .sym { color: #fff; }
+.hdr-right { display: flex; gap: 4px; align-items: center; flex-shrink: 1; }
+
+.join-btn {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 9px; padding: 3px 7px; border-radius: 10px;
+  background: linear-gradient(135deg, #2AABEE, #229ED9);
+  color: #fff; font-weight: 700; letter-spacing: .6px;
+  box-shadow: 0 0 10px rgba(42,171,238,.5);
+  animation: joinPulse 2s infinite;
+  cursor: pointer; flex-shrink: 0;
+}
+.join-btn svg { width: 11px; height: 11px; fill: currentColor; }
+@keyframes joinPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(42,171,238,.4); }
+  50% { box-shadow: 0 0 18px rgba(42,171,238,.8); }
+}
+
+.live {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 8.5px; color: var(--green);
+  padding: 2px 5px; border: 1px solid var(--line); border-radius: 10px;
+  cursor: pointer; flex-shrink: 0;
+}
+.live .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.6s infinite;
+}
+.live.off { color: var(--red); }
+.live.off .dot { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+.live.warn { color: var(--yellow); }
+.live.warn .dot { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: none; }
+.live.rest { color: var(--cyan); }
+.live.rest .dot { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+.settings-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #1c1c1c; border: 1px solid var(--line);
+  color: var(--amber); font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; cursor: pointer;
+}
+.settings-btn:active { background: var(--panel3); transform: scale(.92); }
+
+.price-row { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; flex-wrap: wrap; }
+.price {
+  font-size: 18px; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; letter-spacing: -.5px;
+  transition: color .15s;
+}
+.price.flash-up { color: var(--green); }
+.price.flash-dn { color: var(--red); }
+.chg { font-size: 11px; font-weight: 600; }
+.chg.up { color: var(--green); }
+.chg.dn { color: var(--red); }
+.meta-inline { font-size: 9px; color: var(--sub); margin-left: auto; display: flex; gap: 8px; }
+.meta-inline b { color: var(--txt); font-weight: 400; }
+
+/* ═══════════ PAGE TABS ═══════════ */
+.page-tabs { display: flex; border-top: 1px solid var(--line2); }
+.page-tab {
+  flex: 1; padding: 9px 4px; text-align: center;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 1px;
+  color: var(--sub); cursor: pointer;
+  border-right: 1px solid var(--line2);
+}
+.page-tab:last-child { border-right: 0; }
+.page-tab.on { background: var(--amber); color: #000; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ═══════════ TIMEFRAME TABS ═══════════ */
+.tfs {
+  display: flex; background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 88px; z-index: 48;
+}
+.tf {
+  flex: 1; padding: 8px 6px; text-align: center;
+  color: var(--sub); font-size: 11px; font-weight: 600;
+  border-right: 1px solid var(--line2);
+  letter-spacing: .6px; position: relative;
+}
+.tf:last-child { border-right: 0; }
+.tf.on { background: var(--amber); color: #000; }
+.tf .sig-dot { position: absolute; top: 4px; right: 6px; width: 4px; height: 4px; border-radius: 50%; }
+.tf .sig-dot.long { background: var(--green); }
+.tf .sig-dot.short { background: var(--red); }
+
+/* ═══════════ CHART ═══════════ */
+.chart-wrap {
+  position: relative; background: var(--panel);
+  border-bottom: 1px solid var(--line); padding: 4px 0 0;
+}
+#chart { display: block; width: 100%; }
+.chart-overlay {
+  position: absolute; top: 6px; left: 8px;
+  font-size: 9px; color: var(--sub);
+  background: rgba(0,0,0,.75); padding: 3px 6px;
+  border-left: 2px solid var(--amber); pointer-events: none;
+}
+.chart-overlay b { color: var(--amber); }
+.countdown {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 9px; background: rgba(0,0,0,.75); padding: 3px 6px;
+  border-right: 2px solid var(--cyan); color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.countdown b { color: #fff; }
+
+/* ═══════════ SECTIONS ═══════════ */
+.sec {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel2); border-bottom: 1px solid var(--line);
+  padding: 6px 12px; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.2px; color: var(--amber); text-transform: uppercase;
+  cursor: pointer;
+}
+.sec .r { color: var(--sub); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 10px; }
+.sec .r b { color: var(--amber); font-weight: 700; }
+.sec .chev { transition: transform .2s; display: inline-block; color: var(--sub); }
+
+/* ═══════════ MULTI-TF GRID ═══════════ */
+.mtf-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.mtf-cell {
+  padding: 8px 4px; text-align: center;
+  border-right: 1px solid var(--line2);
+  cursor: pointer; position: relative;
+}
+.mtf-cell:last-child { border-right: 0; }
+.mtf-cell .lbl { font-size: 9px; color: var(--sub); letter-spacing: 1px; font-weight: 700; }
+.mtf-cell .val {
+  font-size: 10px; font-weight: 700; margin-top: 2px;
+  color: var(--dim); font-variant-numeric: tabular-nums;
+}
+.mtf-cell .val.flash-up { color: var(--green); }
+.mtf-cell .val.flash-dn { color: var(--red); }
+.mtf-cell .sig { font-size: 9px; margin-top: 2px; font-weight: 700; color: var(--dim); }
+.mtf-cell.long .val, .mtf-cell.long .sig { color: var(--green); }
+.mtf-cell.short .val, .mtf-cell.short .sig { color: var(--red); }
+.mtf-cell.long { background: var(--green-bg); }
+.mtf-cell.short { background: var(--red-bg); }
+.mtf-cell.conf { border-top: 2px solid var(--amber); }
+.mtf-cell.closed { opacity: .35; }
+
+/* ═══════════ PERFORMANCE / TEST PANELS ═══════════ */
+.perf-panel, .test-panel {
+  background: var(--panel); border-bottom: 1px solid var(--line);
+  overflow: hidden; transition: max-height .25s;
+}
+.perf-panel.collapsed, .test-panel.collapsed { max-height: 0; border-bottom: 0; }
+
+.perf-summary {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--line2);
+}
+.ps { padding: 10px 6px; text-align: center; border-right: 1px solid var(--line2); }
+.ps:last-child { border-right: 0; }
+.ps b {
+  display: block; font-size: 15px; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -.5px;
+}
+.ps small {
+  display: block; font-size: 9px; color: var(--sub);
+  letter-spacing: .8px; margin-top: 2px; text-transform: uppercase;
+}
+
+.perf-mode { display: flex; background: #0d0d0d; border-bottom: 1px solid var(--line2); }
+.pmode {
+  flex: 1; padding: 6px; text-align: center;
+  font-size: 10px; color: var(--sub); font-weight: 700; cursor: pointer;
+}
+.pmode.on { background: var(--amber); color: #000; }
+
+.perf-tabs { display: flex; border-bottom: 1px solid var(--line2); background: var(--panel2); }
+.perf-tab {
+  flex: 1; padding: 6px; text-align: center;
+  font-size: 10px; color: var(--sub); font-weight: 700;
+  cursor: pointer; border-right: 1px solid var(--line2);
+  text-transform: uppercase;
+}
+.perf-tab:last-child { border-right: 0; }
+.perf-tab.on { color: var(--amber); background: #1a1a1a; }
+
+.perf-tbl { width: 100%; border-collapse: collapse; font-size: 10px; }
+.perf-tbl th {
+  padding: 5px 6px; text-align: left;
+  color: var(--sub); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; background: #0d0d0d;
+  border-bottom: 1px solid var(--line);
+}
+.perf-tbl th.num, .perf-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.perf-tbl td { padding: 6px; border-bottom: 1px solid var(--line2); }
+.perf-tbl tr.total td {
+  background: #0d0d0d; font-weight: 700; color: var(--amber);
+  border-top: 1px solid var(--amber-d);
+}
+
+.wr-badge {
+  display: inline-block; padding: 1px 5px; border-radius: 3px;
+  font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.wr-hi { background: rgba(0,255,136,.15); color: var(--green); }
+.wr-mid { background: rgba(255,214,10,.15); color: var(--yellow); }
+.wr-lo { background: rgba(255,56,96,.15); color: var(--red); }
+.wr-na { background: #1a1a1a; color: var(--dim); }
+
+/* ═══════════ FALSIFICATION ═══════════ */
+.test-tbl { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+.test-tbl th {
+  padding: 6px 8px; text-align: left;
+  color: var(--sub); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; background: #0d0d0d;
+  border-bottom: 1px solid var(--line);
+}
+.test-tbl th.num, .test-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.test-tbl td { padding: 8px; border-bottom: 1px solid var(--line2); }
+.test-tbl tr.orig td { background: rgba(255,176,0,.04); }
+.test-tbl tr.shuf td { background: rgba(0,212,255,.04); }
+.test-tbl tr.rev td { background: rgba(176,106,255,.04); }
+.test-lbl { font-weight: 700; font-size: 11px; }
+.test-lbl.orig { color: var(--amber); }
+.test-lbl.shuf { color: var(--cyan); }
+.test-lbl.rev { color: var(--purple); }
+
+.test-verdict { padding: 14px; border-radius: 6px; font-size: 11px; line-height: 1.6; }
+.test-verdict.pass { background: rgba(0,255,136,.08); border-left: 3px solid var(--green); }
+.test-verdict.fail { background: rgba(255,56,96,.08); border-left: 3px solid var(--red); }
+.test-verdict.anti { background: rgba(176,106,255,.08); border-left: 3px solid var(--purple); }
+.test-verdict.mixed { background: rgba(255,214,10,.06); border-left: 3px solid var(--yellow); }
+.test-verdict b {
+  display: block; font-size: 12px; letter-spacing: .8px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.test-verdict.pass b { color: var(--green); }
+.test-verdict.fail b { color: var(--red); }
+.test-verdict.anti b { color: var(--purple); }
+.test-verdict.mixed b { color: var(--yellow); }
+.test-running { padding: 20px; text-align: center; color: var(--sub); font-size: 11px; }
+
+.delta { font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-left: 4px; font-weight: 700; }
+.delta.pos { background: rgba(0,255,136,.15); color: var(--green); }
+.delta.neg { background: rgba(255,56,96,.15); color: var(--red); }
+.delta.neu { background: rgba(255,214,10,.15); color: var(--yellow); }
+
+/* ═══════════ CHIPS ═══════════ */
+.chips {
+  display: flex; gap: 6px; padding: 6px 12px;
+  background: var(--panel2); border-bottom: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  padding: 3px 9px; background: #1c1c1c;
+  border: 1px solid var(--line); border-radius: 12px;
+  font-size: 10px; color: var(--sub); white-space: nowrap;
+  letter-spacing: .4px; font-weight: 600; cursor: pointer;
+}
+.chip.on { background: var(--amber); color: #000; border-color: var(--amber); }
+.chip.group { background: transparent; border-color: var(--line2); color: var(--dim); cursor: default; padding: 3px 3px; }
+
+/* ═══════════ SIGNAL FEED TABLE ═══════════ */
+.tbl-wrap { background: var(--panel); overflow-x: auto; }
+table.feed { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.feed th {
+  padding: 6px 8px; text-align: left;
+  color: var(--amber); font-size: 9px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  border-bottom: 1px solid var(--amber-d);
+  background: var(--panel2); white-space: nowrap;
+}
+table.feed td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line2);
+  white-space: nowrap; vertical-align: middle;
+}
+table.feed tbody tr { cursor: pointer; }
+table.feed tbody tr.hi { background: rgba(255,176,0,.07); border-left: 2px solid var(--amber); }
+
+/* Medal rows */
+table.feed tbody tr.rank-gold {
+  background: linear-gradient(90deg, rgba(255,215,0,.18), rgba(255,215,0,.04) 50%, rgba(255,215,0,.18));
+  border-left: 3px solid #ffd700;
+  animation: goldShine 2.4s ease-in-out infinite;
+}
+table.feed tbody tr.rank-silver {
+  background: linear-gradient(90deg, rgba(192,192,192,.15), rgba(192,192,192,.03) 50%, rgba(192,192,192,.15));
+  border-left: 3px solid #c0c0c0;
+}
+table.feed tbody tr.rank-bronze {
+  background: linear-gradient(90deg, rgba(205,127,50,.15), rgba(205,127,50,.03) 50%, rgba(205,127,50,.15));
+  border-left: 3px solid #cd7f32;
+}
+@keyframes goldShine {
+  0%, 100% { box-shadow: inset 0 0 6px rgba(255,215,0,.25); }
+  50% { box-shadow: inset 0 0 22px rgba(255,215,0,.6), 0 0 14px rgba(255,215,0,.35); }
+}
+.rank-medal {
+  display: inline-block; font-size: 12px; margin-right: 3px;
+  filter: drop-shadow(0 0 3px currentColor); vertical-align: middle;
+}
+tr.rank-gold .rank-medal {
+  font-size: 15px;
+  animation: medalShine 1.2s ease-in-out infinite;
+}
+@keyframes medalShine {
+  0%, 100% { transform: scale(1) rotate(-6deg); filter: drop-shadow(0 0 4px #ffd700) drop-shadow(0 0 8px #ffd700); }
+  50% { transform: scale(1.22) rotate(6deg); filter: drop-shadow(0 0 8px #ffd700) drop-shadow(0 0 16px #ffd700) drop-shadow(0 0 24px #fff); }
+}
+
+.sig-feed-item.rank-gold {
+  background: linear-gradient(90deg, rgba(255,215,0,.15), rgba(255,215,0,.03));
+  border-left: 3px solid #ffd700;
+  animation: goldShine 2.4s ease-in-out infinite;
+}
+.sig-feed-item.rank-silver {
+  background: linear-gradient(90deg, rgba(192,192,192,.12), rgba(192,192,192,.02));
+  border-left: 3px solid #c0c0c0;
+}
+.sig-feed-item.rank-bronze {
+  background: linear-gradient(90deg, rgba(205,127,50,.12), rgba(205,127,50,.02));
+  border-left: 3px solid #cd7f32;
+}
+
+.medal-legend {
+  padding: 5px 12px; background: #0a0a0a;
+  border-bottom: 1px solid var(--line2);
+  font-size: 9px; color: var(--sub); letter-spacing: .4px;
+}
+.medal-legend b { color: var(--amber); }
+
+/* ═══════════ TABLE CELL STYLES ═══════════ */
+.tf-tag {
+  display: inline-block; background: #1c1c1c; color: var(--amber);
+  padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 700;
+}
+.tf-tag.big { background: var(--amber); color: #000; }
+.type-tag { font-weight: 700; }
+.multi-badge {
+  display: inline-block; background: #2a2a2a; color: var(--amber-l);
+  font-size: 9px; font-weight: 700; padding: 1px 5px;
+  border-radius: 8px; margin-left: 4px;
+}
+.dir-long { color: var(--green); font-weight: 700; }
+.dir-short { color: var(--red); font-weight: 700; }
+.stars { color: var(--amber); letter-spacing: -1px; font-size: 11px; }
+.stars .off { color: #333; }
+.price-cell { color: #fff; font-variant-numeric: tabular-nums; }
+.time-cell { color: var(--sub); font-size: 10px; }
+.empty { padding: 30px; text-align: center; color: var(--sub); font-size: 11px; }
+.rr-cell { font-size: 10px; color: var(--cyan); font-weight: 700; }
+.rr-cell small { color: var(--sub); font-weight: 400; }
+
+.outcome-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  margin-right: 4px; vertical-align: middle;
+}
+.outcome-dot.win { background: var(--green); }
+.outcome-dot.loss { background: var(--red); }
+.outcome-dot.expired { background: var(--yellow); }
+.outcome-dot.breakeven { background: var(--grey); }
+.outcome-dot.open { background: var(--dim); }
+
+/* ═══════════ SCANNER ═══════════ */
+.scanner-hero {
+  background: linear-gradient(180deg, #0f0f0f, #0a0a0a);
+  border-bottom: 1px solid var(--amber-d); padding: 12px;
+}
+.scanner-hero h2 {
+  font-size: 12px; color: var(--amber); letter-spacing: 1.5px;
+  text-transform: uppercase; margin-bottom: 4px; font-weight: 700;
+}
+.scanner-hero .sub { font-size: 10px; color: var(--sub); letter-spacing: .3px; line-height: 1.5; }
+
+.scanner-filters { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 12px; }
+.f-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.f-row:last-child { margin-bottom: 0; }
+.f-lbl {
+  font-size: 10px; color: var(--sub); letter-spacing: .6px;
+  text-transform: uppercase; font-weight: 700; min-width: 64px;
+}
+.f-slider { flex: 1; position: relative; }
+.f-slider input[type=range] {
+  width: 100%; -webkit-appearance: none;
+  height: 4px; background: #1c1c1c; border-radius: 2px; outline: none;
+}
+.f-slider input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--amber); cursor: pointer;
+  border: 2px solid #000;
+}
+.f-val {
+  font-size: 11px; color: var(--amber); font-weight: 700;
+  font-variant-numeric: tabular-nums; min-width: 44px; text-align: right;
+}
+.f-sort { display: flex; gap: 4px; flex-wrap: wrap; }
+.f-sort .sb {
+  padding: 4px 8px; background: #1c1c1c;
+  border: 1px solid var(--line); border-radius: 3px;
+  font-size: 10px; color: var(--sub); font-weight: 700;
+  letter-spacing: .4px; cursor: pointer;
+}
+.f-sort .sb.on { background: var(--amber); color: #000; border-color: var(--amber); }
+.f-sort .sb .arr { font-size: 9px; margin-left: 2px; }
+
+.scanner-section {
+  background: var(--panel2); border-bottom: 1px solid var(--line);
+  padding: 6px 12px; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.2px; color: var(--amber); text-transform: uppercase;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.scanner-section .r { color: var(--sub); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 10px; }
+
+.rank-list { background: var(--panel); }
+.rank-item {
+  padding: 10px 12px; border-bottom: 1px solid var(--line2);
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+}
+.rank-item:active { background: var(--panel3); }
+.rank-num {
+  font-size: 14px; font-weight: 700; color: var(--dim);
+  min-width: 22px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.rank-item.top1 .rank-num { color: var(--amber); font-size: 16px; }
+.rank-item.top2 .rank-num { color: #c0c0c0; }
+.rank-item.top3 .rank-num { color: #cd7f32; }
+.rank-mid { flex: 1; min-width: 0; }
+.rank-title { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+.rank-strat { font-size: 12px; font-weight: 700; letter-spacing: .4px; }
+.rank-tf {
+  font-size: 9px; padding: 1px 5px; border-radius: 2px;
+  font-weight: 700; letter-spacing: .5px;
+}
+.rank-tf.big { background: var(--amber); color: #000; }
+.rank-tf.sm { background: #1c1c1c; color: var(--sub); }
+.rank-metrics {
+  font-size: 10px; color: var(--sub);
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+.rank-metrics b { color: var(--txt); font-weight: 700; }
+.rank-right { text-align: right; min-width: 80px; }
+.rank-wr { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.rank-sub { font-size: 9px; color: var(--sub); margin-top: 1px; }
+.rank-empty { padding: 24px; text-align: center; color: var(--sub); font-size: 11px; }
+
+/* Edge badges */
+.edge-badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px; letter-spacing: .3px;
+}
+.edge-gem { background: rgba(0,255,255,.18); color: #00ffff; text-shadow: 0 0 6px rgba(0,255,255,.5); }
+.edge-strong { background: rgba(0,255,136,.15); color: var(--green); }
+.edge-ok { background: rgba(255,214,10,.15); color: var(--yellow); }
+.edge-weak { background: rgba(255,56,96,.15); color: var(--red); }
+
+/* Matrix */
+.matrix-scroll { overflow-x: auto; background: var(--panel); }
+.matrix-tbl { width: 100%; min-width: 540px; border-collapse: collapse; font-size: 10px; }
+.matrix-tbl th {
+  padding: 6px 5px; text-align: center;
+  color: var(--sub); font-size: 9px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase;
+  background: #0d0d0d; border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line2);
+}
+.matrix-tbl th:first-child { text-align: left; padding-left: 10px; }
+.matrix-tbl td {
+  padding: 6px 5px; text-align: center;
+  border-bottom: 1px solid var(--line2);
+  border-right: 1px solid var(--line2);
+  cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.matrix-tbl td:first-child {
+  text-align: left; padding-left: 10px;
+  color: var(--txt); font-weight: 700; letter-spacing: .3px;
+  cursor: default;
+}
+.matrix-tbl td:first-child::before {
+  content: ''; display: inline-block;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--dim); margin-right: 6px; vertical-align: middle;
+}
+.matrix-tbl tr[data-type="PD"] td:first-child::before { background: #ff66cc; }
+.matrix-tbl tr[data-type="VWAP"] td:first-child::before { background: #00ffff; }
+.matrix-tbl tr[data-type="CHoCH"] td:first-child::before { background: #ffb000; }
+.matrix-tbl tr[data-type="SWEEP"] td:first-child::before { background: #00d4ff; }
+.matrix-tbl tr[data-type="BOS"] td:first-child::before { background: #00ff88; }
+.matrix-tbl tr[data-type="OB"] td:first-child::before { background: #ff8c00; }
+.matrix-tbl tr[data-type="FVG"] td:first-child::before { background: #b06aff; }
+.matrix-tbl tr[data-type="MR"] td:first-child::before { background: #ff9500; }
+.matrix-tbl tr[data-type="RSI"] td:first-child::before { background: #ffd60a; }
+
+.mx-cell { padding: 6px 4px; border-radius: 3px; }
+.mx-cell.empty { color: var(--dim); font-size: 9px; }
+.mx-cell.g0 { background: rgba(255,56,96,.12); color: var(--red); }
+.mx-cell.g1 { background: rgba(255,56,96,.06); color: var(--red); }
+.mx-cell.g2 { background: rgba(255,214,10,.08); color: var(--yellow); }
+.mx-cell.g3 { background: rgba(0,255,136,.08); color: var(--green); }
+.mx-cell.g4 { background: rgba(0,255,136,.15); color: var(--green); font-weight: 700; }
+.mx-cell.g5 {
+  background: rgba(0,255,136,.25); color: var(--green);
+  font-weight: 700; box-shadow: inset 0 0 0 1px rgba(0,255,136,.4);
+}
+.mx-wr { font-size: 11px; font-weight: 700; line-height: 1.1; }
+.mx-n { font-size: 8px; color: var(--sub); font-weight: 400; margin-top: 1px; }
+
+/* ═══════════ SETTINGS MODAL ═══════════ */
+.settings-section { padding: 14px 16px; border-bottom: 1px solid var(--line2); }
+.settings-section:last-child { border-bottom: 0; }
+.settings-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.4px;
+  color: var(--amber); text-transform: uppercase;
+  margin-bottom: 12px; display: flex;
+  justify-content: space-between; align-items: center;
+}
+.settings-section-title .badge {
+  font-size: 9px; padding: 2px 7px; border-radius: 10px;
+  background: #1c1c1c; color: var(--sub); font-weight: 600;
+}
+.settings-section-title .badge.ok { background: rgba(0,255,136,.15); color: var(--green); }
+.settings-section-title .badge.err { background: rgba(255,56,96,.15); color: var(--red); }
+
+.settings-row {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 10px;
+}
+.settings-row:last-child { margin-bottom: 0; }
+.settings-label { font-size: 11px; color: var(--txt); font-weight: 600; flex-shrink: 0; }
+.settings-label .hint {
+  display: block; font-size: 9px; color: var(--sub);
+  font-weight: 400; margin-top: 2px; letter-spacing: .2px;
+}
+.settings-input {
+  width: 58%; padding: 7px 10px;
+  background: #0a0a0a; border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt);
+  font-family: inherit; font-size: 11px;
+  outline: none; text-align: right;
+}
+.settings-input:focus { border-color: var(--amber); }
+.settings-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.settings-btn-row .btn { flex: 1; min-width: 0; padding: 8px 10px; font-size: 10px; }
+.settings-status {
+  font-size: 10px; padding: 7px 10px; border-radius: 4px;
+  background: #0d0d0d; border-left: 3px solid var(--dim);
+  color: var(--sub); margin-top: 8px;
+  letter-spacing: .3px; word-break: break-word;
+}
+.settings-status.ok { border-color: var(--green); color: var(--green); }
+.settings-status.err { border-color: var(--red); color: var(--red); }
+
+/* Preset grid */
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.preset-btn {
+  padding: 12px 8px; background: #0a0a0a;
+  border: 2px solid var(--line2); border-radius: 6px;
+  cursor: pointer; text-align: center; transition: .15s;
+}
+.preset-btn:active { transform: scale(.97); }
+.preset-btn.on { border-color: var(--amber); background: rgba(255,176,0,.08); }
+.preset-btn.on.conservative { border-color: var(--green); background: rgba(0,255,136,.08); }
+.preset-btn.on.aggressive { border-color: var(--red); background: rgba(255,56,96,.08); }
+.preset-btn .icon { font-size: 18px; line-height: 1; margin-bottom: 4px; }
+.preset-btn .name { font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+.preset-btn .desc { font-size: 8px; color: var(--sub); margin-top: 3px; line-height: 1.3; }
+
+/* Strategy toggle grid */
+.strat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.strat-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; background: #0a0a0a;
+  border-radius: 5px; border: 1px solid var(--line2);
+}
+.strat-toggle .name { font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+.strat-toggle .hint { font-size: 8px; color: var(--sub); margin-top: 1px; }
+
+/* Toggle switch */
+.toggle {
+  position: relative; width: 44px; height: 24px;
+  background: #1c1c1c; border-radius: 12px;
+  cursor: pointer; transition: .2s;
+  border: 1px solid var(--line); flex-shrink: 0;
+}
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: #555; border-radius: 50%; transition: .2s;
+}
+.toggle.on { background: rgba(0,255,136,.15); border-color: rgba(0,255,136,.4); }
+.toggle.on::after { background: var(--green); left: 22px; }
+.toggle.pink.on { background: rgba(255,102,204,.15); border-color: rgba(255,102,204,.4); }
+.toggle.pink.on::after { background: var(--pink); }
+.toggle.cyan.on { background: rgba(0,212,255,.15); border-color: rgba(0,212,255,.4); }
+.toggle.cyan.on::after { background: var(--cyan); }
+.toggle.vwap.on { background: rgba(0,255,255,.15); border-color: rgba(0,255,255,.4); }
+.toggle.vwap.on::after { background: var(--vwap); }
+.toggle.sm { width: 34px; height: 20px; }
+.toggle.sm::after { width: 14px; height: 14px; }
+.toggle.sm.on::after { left: 16px; }
+
+/* Segment control */
+.seg { display: flex; gap: 6px; flex-shrink: 0; }
+.seg .chip { padding: 6px 12px; cursor: pointer; }
+.seg .chip.on { background: var(--amber); color: #000; border-color: var(--amber); }
+
+/* ═══════════ SIGNAL PAGE ═══════════ */
+.sig-preview-wrap { padding: 12px; background: var(--panel); }
+#sigCanvas {
+  display: block; width: 100%; max-width: 900px;
+  margin: 0 auto; background: #000; border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.5), 0 0 0 1px #1a1a1a;
+}
+.sig-caption {
+  margin-top: 12px; padding: 14px;
+  background: #0a0a0a; border-radius: 6px;
+  border: 1px solid var(--line2);
+  white-space: pre-wrap; word-break: break-word;
+  font-size: 11px; color: var(--txt); line-height: 1.5;
+  max-width: 900px; margin-left: auto; margin-right: auto;
+  font-family: ui-monospace, monospace;
+}
+.sig-caption b { color: var(--amber); font-weight: 700; }
+.sig-caption pre {
+  margin: 6px 0; background: #050505;
+  padding: 8px 10px; border-radius: 4px;
+  border-left: 2px solid var(--cyan);
+  color: var(--txt); font-family: inherit;
+  font-size: 11px; overflow-x: auto;
+  white-space: pre; line-height: 1.5;
+}
+.sig-caption i { color: var(--sub); font-style: italic; }
+
+.sig-actions { padding: 12px; display: flex; gap: 8px; flex-wrap: wrap; background: var(--panel); }
+.btn {
+  padding: 9px 14px; border-radius: 5px;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px;
+  font-family: inherit; border: 0; cursor: pointer;
+  transition: .15s; flex: 1; min-width: 120px;
+}
+.btn-primary { background: var(--amber); color: #000; }
+.btn-primary:active { background: var(--amber-l); }
+.btn-primary:disabled { opacity: .5; cursor: wait; }
+.btn-tg { background: var(--tg); color: #fff; }
+.btn-tg:active { opacity: .85; }
+.btn-tg:disabled { opacity: .5; cursor: wait; }
+.btn-ghost { background: transparent; color: var(--sub); border: 1px solid var(--line); }
+.btn-ghost:active { background: var(--panel3); }
+.btn.loading { opacity: .6; cursor: wait; }
+
+.sig-feed-item {
+  padding: 10px 12px; border-bottom: 1px solid var(--line2);
+  display: flex; align-items: center; gap: 10px; font-size: 11px;
+}
+.sig-feed-item:last-child { border-bottom: 0; }
+.sig-feed-info { flex: 1; min-width: 0; }
+.sig-feed-title { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+.sig-feed-type { font-weight: 700; font-size: 12px; }
+.sig-feed-tf {
+  font-size: 9px; padding: 1px 5px;
+  background: #1c1c1c; border-radius: 2px;
+  font-weight: 700; letter-spacing: .4px;
+}
+.sig-feed-dir { font-weight: 700; }
+.sig-feed-meta { font-size: 10px; color: var(--sub); }
+.sig-send-btn {
+  padding: 6px 10px; border-radius: 3px;
+  font-size: 10px; font-weight: 700; letter-spacing: .5px;
+  background: var(--tg); color: #fff;
+  border: 0; cursor: pointer; font-family: inherit; flex-shrink: 0;
+}
+.sig-send-btn:disabled { opacity: .5; cursor: wait; }
+.sig-send-btn.sent { background: rgba(0,255,136,.15); color: var(--green); }
+.sig-send-btn.fail { background: rgba(255,56,96,.15); color: var(--red); }
+
+/* ═══════════ LOG ═══════════ */
+.log-item {
+  padding: 6px 12px; border-bottom: 1px solid var(--line2);
+  font-size: 10px; display: flex; gap: 8px; align-items: center;
+}
+.log-time { color: var(--dim); flex-shrink: 0; font-size: 9px; }
+.log-msg { color: var(--sub); flex: 1; word-break: break-word; }
+.log-item.ok .log-msg { color: var(--green); }
+.log-item.err .log-msg { color: var(--red); }
+.log-item.warn .log-msg { color: var(--yellow); }
+
+/* ═══════════ MODAL ═══════════ */
+.modal {
+  position: fixed; inset: 0; z-index: 100;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal.show { display: flex; animation: fadeIn .15s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.85); backdrop-filter: blur(4px);
+}
+.modal-body {
+  position: relative; width: 100%; max-width: 640px;
+  max-height: 92vh; background: var(--panel2);
+  border-top: 2px solid var(--amber);
+  border-radius: 12px 12px 0 0;
+  overflow-y: auto; padding-bottom: 24px;
+  animation: slideUp .2s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-hdr {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--panel2); border-bottom: 1px solid var(--line);
+  padding: 14px 16px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.modal-hdr .type { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.modal-hdr .sub { font-size: 10px; color: var(--sub); margin-top: 3px; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--panel3); color: var(--sub); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.bar-tabs {
+  display: flex; gap: 5px; overflow-x: auto;
+  padding: 10px 16px 4px; background: var(--panel2);
+  position: sticky; top: 63px; z-index: 1;
+  scrollbar-width: none; border-bottom: 1px solid var(--line2);
+}
+.bar-tabs::-webkit-scrollbar { display: none; }
+.bar-tab {
+  padding: 5px 10px; background: #1a1a1a;
+  border: 1px solid var(--line); border-radius: 4px;
+  font-size: 10px; font-weight: 700;
+  white-space: nowrap; color: var(--sub);
+}
+.bar-tab.on { background: var(--amber); color: #000; border-color: var(--amber); }
+
+.sig-card { padding: 14px 16px; border-bottom: 1px solid var(--line2); }
+.sig-card:last-child { border-bottom: 0; }
+.sig-card.dimmed { opacity: .4; }
+.m-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--amber); text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex; justify-content: space-between;
+}
+.price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.pcell {
+  background: #0a0a0a; border-radius: 6px;
+  padding: 9px 6px; text-align: center;
+  border-left: 2px solid;
+}
+.pcell.entry { border-color: var(--cyan); }
+.pcell.stop { border-color: var(--red); }
+.pcell.target { border-color: var(--green); }
+.plbl {
+  font-size: 9px; color: var(--sub);
+  letter-spacing: 1px; font-weight: 700; text-transform: uppercase;
+}
+.pval { font-size: 14px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.pcell.entry .pval { color: var(--cyan); }
+.pcell.stop .pval { color: var(--red); }
+.pcell.target .pval { color: var(--green); }
+
+.outcome-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 6px;
+  margin-top: 8px; font-size: 11px;
+}
+.outcome-bar.win { background: rgba(0,255,136,.08); border: 1px solid rgba(0,255,136,.3); }
+.outcome-bar.loss { background: rgba(255,56,96,.08); border: 1px solid rgba(255,56,96,.3); }
+.outcome-bar.expired { background: rgba(255,214,10,.06); border: 1px solid rgba(255,214,10,.25); }
+.outcome-bar.breakeven { background: rgba(160,160,160,.06); border: 1px solid rgba(160,160,160,.25); }
+.outcome-bar.open { background: #0d0d0d; border: 1px solid var(--line); }
+.outcome-bar .icon { font-size: 16px; font-weight: 700; }
+.outcome-bar .txt { flex: 1; }
+.outcome-bar .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* ═══════════ TOAST ═══════════ */
+#toast {
+  position: fixed; bottom: 60px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--red); color: #fff;
+  padding: 9px 16px; border-radius: 4px;
+  font-size: 11px; z-index: 200;
+  opacity: 0; transition: .25s; pointer-events: none;
+  max-width: 90vw; text-align: center;
+  font-weight: 600; letter-spacing: .3px;
+}
+#toast.show { opacity: 1; }
+#toast.ok { background: var(--green); color: #000; }
+#toast.warn { background: var(--yellow); color: #000; }
+
+/* ═══════════ DESKTOP ═══════════ */
+@media (min-width: 700px) {
+  body {
+    max-width: 900px; margin: 0 auto;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-top">
+      <div class="brand">
+        <span class="sym">XAU</span> ·
+        <span style="color:var(--amber-l);font-size:10px">GOD'S EYE v4.2</span>
+      </div>
+      <div class="hdr-right">
+        <a href="https://t.me/+6lyGvufwS0U1MGVl"
+           target="_blank" rel="noopener" class="join-btn">
+          <svg viewBox="0 0 24 24">
+            <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
+          </svg>
+          JOIN
+        </a>
+        <div class="live" id="live">
+          <span class="dot"></span>
+          <span id="liveTxt">BOOT</span>
+        </div>
+        <button class="settings-btn" id="btnSettings" title="Settings">⚙</button>
+      </div>
+    </div>
+    <div class="price-row">
+      <div class="price" id="px">—</div>
+      <div class="chg" id="chg">—</div>
+      <div class="meta-inline">
+        <span>H <b id="hi">—</b></span>
+        <span>L <b id="lo">—</b></span>
+        <span>V <b id="vol">—</b></span>
+      </div>
+    </div>
+  </div>
+  <div class="page-tabs" id="pageTabs">
+    <div class="page-tab on" data-page="terminal">◈ TERMINAL</div>
+    <div class="page-tab" data-page="scanner">◈ SCANNER</div>
+    <div class="page-tab" data-page="signal">◈ SIGNAL</div>
+  </div>
+</header>
+
+<!-- ═══════════════ TERMINAL PAGE ═══════════════ -->
+<div class="page active" id="page-terminal">
+  <div id="expBar" style="display:flex;background:#0d0d0d;border-bottom:1px solid var(--line);padding:6px 8px;gap:6px;overflow-x:auto;scrollbar-width:none"></div>
+  <div id="expInfo" style="padding:6px 12px;background:#0a0a0a;border-bottom:1px solid var(--line);font-size:10px;color:var(--sub);line-height:1.4"></div>
+
+  <nav class="tfs" id="tfs"></nav>
+
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+    <div class="chart-overlay" id="chartInfo">TF <b>—</b></div>
+    <div class="countdown" id="cd">—</div>
+  </div>
+
+  <div class="sec" id="testSec" onclick="toggleTest()">
+    <span>◈ Falsification <span class="chev" id="testChev">▸</span></span>
+    <span class="r" id="testLine">—</span>
+  </div>
+  <div class="test-panel collapsed" id="testPanel"></div>
+
+  <div class="sec" id="perfSec" onclick="togglePerf()">
+    <span>◈ Performance <span class="chev" id="perfChev">▾</span></span>
+    <span class="r" id="perfLine">—</span>
+  </div>
+  <div class="perf-panel" id="perfPanel"></div>
+
+  <div class="sec">
+    <span>◈ Multi-Timeframe</span>
+    <span class="r" id="mtfTime">—</span>
+  </div>
+  <div class="mtf-grid" id="mtfGrid"></div>
+
+  <div class="sec">
+    <span>◈ Signal Feed</span>
+    <span class="r" id="sigCount">0</span>
+  </div>
+  <div class="medal-legend">
+    🥇 <b>TOP 1 Edge</b> · 🥈 <b>TOP 2</b> · 🥉 <b>TOP 3</b> — by Edge Score (min N=10)
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="tbl-wrap">
+    <table class="feed">
+      <thead>
+        <tr>
+          <th>Time</th><th>TF</th><th>Type</th>
+          <th>Dir</th><th>Entry</th><th>R:R</th><th>Conf</th>
+        </tr>
+      </thead>
+      <tbody id="sigBody">
+        <tr><td colspan="7" class="empty">Menunggu data…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ SCANNER PAGE ═══════════════ -->
+<div class="page" id="page-scanner">
+  <div class="scanner-hero">
+    <h2>◈ EDGE SCANNER v4.2</h2>
+    <div class="sub">
+      Edge Score = PF × √N × (WR/50) — ranking by real profitability, not just WR.
+    </div>
+  </div>
+
+  <div class="scanner-filters">
+    <div class="f-row">
+      <div class="f-lbl">Min N</div>
+      <div class="f-slider">
+        <input type="range" id="fMinN" min="1" max="100" value="10" step="1">
+      </div>
+      <div class="f-val" id="fMinNVal">10</div>
+    </div>
+    <div class="f-row">
+      <div class="f-lbl">Min WR</div>
+      <div class="f-slider">
+        <input type="range" id="fMinWR" min="0" max="80" value="0" step="1">
+      </div>
+      <div class="f-val" id="fMinWRVal">0%</div>
+    </div>
+    <div class="f-row">
+      <div class="f-lbl">Min Exp</div>
+      <div class="f-slider">
+        <input type="range" id="fMinExp" min="-100" max="100" value="-100" step="1">
+      </div>
+      <div class="f-val" id="fMinExpVal">-1%</div>
+    </div>
+    <div class="f-row">
+      <div class="f-lbl">Sort</div>
+      <div class="f-sort" id="fSort">
+        <div class="sb on" data-sort="edge">Edge<span class="arr">↓</span></div>
+        <div class="sb" data-sort="pf">PF<span class="arr"></span></div>
+        <div class="sb" data-sort="exp">Exp<span class="arr"></span></div>
+        <div class="sb" data-sort="wr">WR<span class="arr"></span></div>
+        <div class="sb" data-sort="n">N<span class="arr"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scanner-section">
+    <span>◈ Ranking</span>
+    <span class="r" id="rankCount">—</span>
+  </div>
+  <div class="rank-list" id="rankList"></div>
+
+  <div class="scanner-section">
+    <span>◈ Matrix Strategy × TF</span>
+    <span class="r">WR % (N)</span>
+  </div>
+  <div class="matrix-scroll">
+    <table class="matrix-tbl" id="matrixTbl"></table>
+  </div>
+</div>
+
+<!-- ═══════════════ SIGNAL PAGE ═══════════════ -->
+<div class="page" id="page-signal">
+  <div class="scanner-hero">
+    <h2>◈ SIGNAL GENERATOR · TELEGRAM</h2>
+    <div class="sub">Konfigurasi di ⚙ Settings · Whitelist per strategi · Preset modes</div>
+  </div>
+
+  <div class="scanner-section">
+    <span>◈ Preview Signal</span>
+    <span class="r" id="sigPreviewStatus">—</span>
+  </div>
+  <div class="sig-preview-wrap">
+    <canvas id="sigCanvas" width="1200" height="675"></canvas>
+    <div class="sig-caption" id="sigCaptionPreview">Loading…</div>
+  </div>
+  <div class="sig-actions">
+    <button class="btn btn-primary" id="btnGenerate">⟳ REGENERATE</button>
+    <button class="btn btn-tg" id="btnSendPreview" disabled>SEND →</button>
+  </div>
+
+  <div class="scanner-section">
+    <span>◈ Sinyal Terdeteksi</span>
+    <span class="r" id="sigFeedCount">0</span>
+  </div>
+  <div id="sigFeedList">
+    <div class="empty">Belum ada sinyal</div>
+  </div>
+
+  <div class="scanner-section" data-toggle="sigLogPanel">
+    <span>◈ Log <span class="chev" id="sigLogChev">▸</span></span>
+    <span class="r" id="sigLogCount">0</span>
+  </div>
+  <div class="panel collapsed" id="sigLogPanel" style="max-height:250px;overflow-y:auto">
+    <div id="sigLogList"><div class="empty">—</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+<div class="modal" id="modal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-body" id="modalBody"></div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-body" id="settingsBody"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   GOD'S EYE v4.2 — Clean Readable Build
+   ═══════════════════════════════════════════════════════════════
+   Features:
+   - Preset Modes (Conservative/Balanced/Aggressive/Custom)
+   - TF-specific TargetRR
+   - Edge Score = PF × √N × (WR/50)
+   - Edge badge (💎 GEM / 🔥 STRONG / ✅ OK / ⚠️ WEAK)
+   - Regime TILT mode (confidence adjust, not block)
+   - Same-bar conservative loss
+   - Breakeven stop after 1.5R profit
+   - VWAP anchored to NY close (21:00 UTC)
+   - MTF window = 3× LTF
+   - OB requires vol ≥ 1.15× avg
+   - Whitelist auto-send per strategy
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Symbol config ─── */
+const DISPLAY_SYMBOL = 'XAUUSDT';
+const DATA_SYMBOL = 'PAXGUSDT';
+const DATA_SYMBOL_LOWER = DATA_SYMBOL.toLowerCase();
+
+/* ─── Timeframes ─── */
+const TF_LIST = ['1m', '5m', '15m', '30m', '1h'];
+const TF_MS = {
+  '1m': 60e3,
+  '5m': 300e3,
+  '15m': 900e3,
+  '30m': 1800e3,
+  '1h': 3600e3,
+};
+
+/* ─── Chart / polling ─── */
+const CHART_VIEW = 90;
+const WS_PROBE_TIMEOUT = 2500;
+const POLL_INTERVAL_MS = 3000;
+const POLL_TICKER_MS = 15000;
+
+/* ─── Pagination for small TFs ─── */
+const SMALL_TFS = ['1m', '5m'];
+const SMALL_TF_WINDOW_DAYS = 7;
+const BINANCE_MAX_LIMIT = 1000;
+const PAGINATE_SLEEP_MS = 120;
+const PAGINATE_MAX_ITER = 20;
+
+function getCandleTarget(tf) {
+  if (SMALL_TFS.includes(tf)) {
+    const need = Math.ceil(SMALL_TF_WINDOW_DAYS * 24 * 60 * 60 * 1000 / TF_MS[tf]) + 50;
+    return need;
+  }
+  return BINANCE_MAX_LIMIT;
+}
+
+/* ─── API ─── */
+let REST_URL = 'https://api.binance.com';
+let WS_URL = `wss://stream.binance.com:9443/stream?streams=${
+  TF_LIST.map(t => `${DATA_SYMBOL_LOWER}@kline_${t}`).join('/')
+}`;
+
+/* ─── Fee ─── */
+const FEE_TAKER = 0;
+const FEE_MAKER = 0;
+function activeFee() {
+  return STATE.entryMode === 'next-open' ? FEE_MAKER : FEE_TAKER;
+}
+
+/* ─── SMC constants ─── */
+const SWEEP_RECLAIM_BARS = 3;
+const MAX_FVG_AGE = 40;
+const MAX_OB_AGE = 60;
+
+/* ─── ADX regime ─── */
+const ADX_PERIOD = 14;
+const ADX_TRENDING = 25;
+const ADX_RANGING = 20;
+
+/* ═══════════════════════════════════════════════════════════════
+   STRATEGY CONFIG
+   ═══════════════════════════════════════════════════════════════
+   trendBias:
+     'with'    = follow trend (kill saat ranging)
+     'counter' = counter trend (kill saat trending)
+     'both'    = work everywhere
+   ═══════════════════════════════════════════════════════════════ */
+const STRATEGY_CONFIG = {
+  PD: {
+    label: 'Previous Day Sweep',
+    color: '#ff66cc',
+    priority: 0,
+    targetRR: 1.8,
+    targetRRByTF: { '1m': 1.5, '5m': 1.8, '15m': 2.0, '30m': 2.5, '1h': 3.0 },
+    minRiskAtr: 0.6,
+    targetAtr: 2.0,
+    maxHold: { '1m': 60, '5m': 36, '15m': 24, '30m': 14, '1h': 10 },
+    breakevenAtR: 1.5,
+    trendBias: 'counter',
+    autoSend: false,
+    minSweepDepth: 0.001,
+  },
+  VWAP: {
+    label: 'VWAP Reclaim/Reject',
+    color: '#00ffff',
+    priority: 1,
+    targetRR: 2.0,
+    targetRRByTF: { '1m': 1.5, '5m': 1.8, '15m': 2.0, '30m': 2.2, '1h': 2.5 },
+    minRiskAtr: 0.7,
+    targetAtr: 2.4,
+    maxHold: { '1m': 60, '5m': 48, '15m': 24, '30m': 16, '1h': 12 },
+    breakevenAtR: 1.5,
+    trendBias: 'both',
+    autoSend: true,
+  },
+  CHoCH: {
+    label: 'Change of Character',
+    color: '#ffb000',
+    priority: 2,
+    targetRR: 1.8,
+    minRiskAtr: 0.6,
+    targetAtr: 2.2,
+    maxHold: { '1m': 50, '5m': 36, '15m': 20, '30m': 12, '1h': 8 },
+    breakevenAtR: 1.5,
+    trendBias: 'counter',
+    autoSend: false,
+  },
+  SWEEP: {
+    label: 'Liquidity Sweep',
+    color: '#00d4ff',
+    priority: 3,
+    targetRR: 2.5,
+    targetRRByTF: { '1m': 2.0, '5m': 2.5, '15m': 2.5, '30m': 2.5, '1h': 3.0 },
+    minRiskAtr: 0.7,
+    targetAtr: 2.8,
+    maxHold: { '1m': 50, '5m': 36, '15m': 20, '30m': 12, '1h': 8 },
+    breakevenAtR: 1.5,
+    trendBias: 'counter',
+    autoSend: true,
+  },
+  BOS: {
+    label: 'Break of Structure',
+    color: '#00ff88',
+    priority: 4,
+    targetRR: 1.6,
+    targetRRByTF: { '1m': 1.5, '5m': 1.6, '15m': 1.8, '30m': 2.0, '1h': 2.2 },
+    minRiskAtr: 0.6,
+    targetAtr: 2.0,
+    maxHold: { '1m': 40, '5m': 30, '15m': 18, '30m': 12, '1h': 8 },
+    breakevenAtR: 1.5,
+    trendBias: 'with',
+    autoSend: true,
+  },
+  OB: {
+    label: 'Order Block Retest',
+    color: '#ff8c00',
+    priority: 5,
+    targetRR: 2.0,
+    minRiskAtr: 0.7,
+    targetAtr: 2.4,
+    maxHold: { '1m': 60, '5m': 36, '15m': 24, '30m': 14, '1h': 10 },
+    breakevenAtR: 1.5,
+    trendBias: 'both',
+    autoSend: false,
+  },
+  FVG: {
+    label: 'Fair Value Gap',
+    color: '#b06aff',
+    priority: 6,
+    targetRR: 2.2,
+    targetRRByTF: { '1m': 1.5, '5m': 1.8, '15m': 2.0, '30m': 2.5, '1h': 3.0 },
+    minRiskAtr: 0.8,
+    targetAtr: 2.6,
+    maxHold: { '1m': 60, '5m': 48, '15m': 30, '30m': 20, '1h': 14 },
+    breakevenAtR: 1.5,
+    trendBias: 'with',
+    autoSend: true,
+  },
+  MR: {
+    label: 'Mean-Reversion',
+    color: '#ff9500',
+    priority: 7,
+    targetRR: 1.5,
+    minRiskAtr: 0.8,
+    targetAtr: 2.0,
+    maxHold: { '1m': 30, '5m': 24, '15m': 16, '30m': 10, '1h': 6 },
+    breakevenAtR: 1.0,
+    trendBias: 'counter',
+    autoSend: false,
+  },
+  RSI: {
+    label: 'RSI Extreme',
+    color: '#ffd60a',
+    priority: 8,
+    targetRR: 1.5,
+    minRiskAtr: 0.8,
+    targetAtr: 2.0,
+    maxHold: { '1m': 30, '5m': 24, '15m': 16, '30m': 10, '1h': 6 },
+    breakevenAtR: 1.0,
+    trendBias: 'counter',
+    autoSend: false,
+  },
+};
+
+const PRIORITY = Object.fromEntries(
+  Object.entries(STRATEGY_CONFIG).map(([k, v]) => [k, v.priority])
+);
+const SIG_COLOR = Object.fromEntries(
+  Object.entries(STRATEGY_CONFIG).map(([k, v]) => [k, v.color])
+);
+const SIG_FULL = {
+  PD: 'Previous Day Sweep',
+  VWAP: 'VWAP Reclaim/Reject',
+  BOS: 'Break of Structure',
+  CHoCH: 'Change of Character',
+  SWEEP: 'Liquidity Sweep',
+  OB: 'Order Block Retest',
+  FVG: 'Fair Value Gap Retest',
+  MR: 'Mean-Reversion (BB+RSI)',
+  RSI: 'RSI Extreme',
+};
+const SCANNER_TYPES = Object.keys(STRATEGY_CONFIG);
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESET MODES
+   ═══════════════════════════════════════════════════════════════ */
+const PRESET_MODES = {
+  conservative: {
+    icon: '🛡️',
+    name: 'CONSERVATIVE',
+    desc: 'Whitelist: VWAP, BOS, FVG, SWEEP. Min N=20.',
+    whitelist: {
+      PD: false, VWAP: true, CHoCH: false, SWEEP: true,
+      BOS: true, OB: false, FVG: true, MR: false, RSI: false,
+    },
+    minN: 20,
+  },
+  balanced: {
+    icon: '⚖️',
+    name: 'BALANCED',
+    desc: 'Add MR. Min N=10.',
+    whitelist: {
+      PD: false, VWAP: true, CHoCH: false, SWEEP: true,
+      BOS: true, OB: false, FVG: true, MR: true, RSI: false,
+    },
+    minN: 10,
+  },
+  aggressive: {
+    icon: '🔥',
+    name: 'AGGRESSIVE',
+    desc: 'All strategies. Min N=5.',
+    whitelist: {
+      PD: true, VWAP: true, CHoCH: true, SWEEP: true,
+      BOS: true, OB: true, FVG: true, MR: true, RSI: true,
+    },
+    minN: 5,
+  },
+  custom: {
+    icon: '⚙️',
+    name: 'CUSTOM',
+    desc: 'Manual config.',
+    whitelist: null,
+    minN: null,
+  },
+};
+
+/* ─── Telegram defaults ─── */
+const DEFAULT_TG_TOKEN = '7795828349:AAE5SNt3aIIlsMeQRrFlWBIzjL4F-aFLXGQ';
+const DEFAULT_TG_CHAT_ID = '-1002140666105';
+const CATCHUP_WINDOW_MS = 60_000;
+const DEFAULT_AUTO_MIN_CONF = 4;
+const DEFAULT_COOLDOWN_SEC = 180;
+const DEFAULT_POLL_SEC = 60;
+const DEFAULT_TG_TF = '15m';
+const CFG_KEY = 'godseye-config-v4-2';
+
+/* ─── Experiment modes ─── */
+const EXPERIMENTS = {
+  base: {
+    label: 'BASE',
+    desc: 'Per-strategy default config',
+    minQualityFactors: 0,
+  },
+  A: {
+    label: 'A · QUALITY',
+    desc: '≥ 2 faktor kualitas',
+    minQualityFactors: 2,
+  },
+  B: {
+    label: 'B · TREND',
+    desc: 'Searah EMA50',
+    requireTrend: true,
+    emaFilterLen: 50,
+  },
+};
+
+/* ─── Helpers ─── */
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html != null) e.innerHTML = html;
+  return e;
+};
+const fmtP = v => v.toFixed(2);
+const pct = (a, b) => b === 0 ? 0 : ((a - b) / b) * 100;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+const STATE = {
+  page: 'terminal',
+  tf: '5m',
+  data: {},
+
+  ws: null,
+  wsRetry: 0,
+  wsTimer: null,
+
+  pollTimer: null,
+  tickerTimer: null,
+  pollBusy: false,
+  source: 'unknown',
+  loading: false,
+
+  signalMap: new Map(),
+  nextSid: 1,
+  filter: { tf: 'all', dir: 'all', type: 'all' },
+
+  lastPrice: null,
+  flashTimers: {},
+  alertEnabled: false,
+  audioCtx: null,
+  seenSignalKeys: new Set(),
+
+  perfTab: 'type',
+  perfCollapsed: false,
+  perfMode: 'net',
+
+  weekendFilter: true,
+  killZoneFilter: false,
+  pdSweepEnabled: true,
+  vwapEnabled: true,
+  regimeFilter: true,
+  regimeTilt: true,
+  entryMode: 'next-open',
+
+  mode: 'base',
+  preset: 'balanced',
+
+  testOpen: false,
+  testResults: null,
+  testRunning: false,
+
+  scanner: {
+    minN: 10,
+    minWR: 0,
+    minExp: -1.0,
+    sortKey: 'edge',
+    sortDir: 'desc',
+  },
+
+  strategyAutoSend: {},
+
+  tg: {
+    token: DEFAULT_TG_TOKEN,
+    chatId: DEFAULT_TG_CHAT_ID,
+    configured: true,
+    autoEnabled: true,
+    minConf: DEFAULT_AUTO_MIN_CONF,
+    cooldownSec: DEFAULT_COOLDOWN_SEC,
+    pollSec: DEFAULT_POLL_SEC,
+    tf: DEFAULT_TG_TF,
+    lastSendAt: 0,
+  },
+
+  sigFeed: [],
+  previewSignal: null,
+  seenSignalKeysTg: new Set(),
+  tgPollTimer: null,
+  medalSoundPlayed: new Set(),
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE ROUTER
+   ═══════════════════════════════════════════════════════════════ */
+function switchPage(page) {
+  if (STATE.page === page) return;
+  STATE.page = page;
+
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + page);
+  });
+  document.querySelectorAll('.page-tab').forEach(t => {
+    t.classList.toggle('on', t.dataset.page === page);
+  });
+
+  if (page === 'scanner') renderScanner();
+  if (page === 'signal') {
+    renderSigFeed();
+    renderSigLog();
+    if (!STATE.previewSignal) setTimeout(generateSignalPreview, 100);
+  }
+  if (page === 'terminal') renderChart();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TIME FILTERS
+   ═══════════════════════════════════════════════════════════════ */
+function isTradingTime(ts) {
+  const d = new Date(ts);
+  const dow = d.getUTCDay();
+  const hr = d.getUTCHours();
+
+  if (dow === 6) return false;
+  if (dow === 0 && hr < 22) return false;
+  if (dow === 5 && hr >= 22) return false;
+  return true;
+}
+
+function isKillZone(ts) {
+  const d = new Date(ts);
+  const hr = d.getUTCHours() + d.getUTCMinutes() / 60;
+  return (hr >= 7 && hr < 10) || (hr >= 12 && hr < 15);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INDICATORS
+   ═══════════════════════════════════════════════════════════════ */
+const IND = {
+  rsi(c, p = 14) {
+    const o = new Array(c.length).fill(null);
+    let g = 0, l = 0;
+    for (let i = 1; i < c.length; i++) {
+      const d = c[i].c - c[i - 1].c;
+      const u = d > 0 ? d : 0;
+      const dn = d < 0 ? -d : 0;
+      if (i <= p) {
+        g += u; l += dn;
+        if (i === p) {
+          g /= p; l /= p;
+          o[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+        }
+      } else {
+        g = (g * (p - 1) + u) / p;
+        l = (l * (p - 1) + dn) / p;
+        o[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+      }
+    }
+    return o;
+  },
+
+  atr(c, p = 14) {
+    const o = new Array(c.length).fill(null);
+    const tr = new Array(c.length).fill(0);
+    for (let i = 1; i < c.length; i++) {
+      const x = c[i], pr = c[i - 1];
+      tr[i] = Math.max(
+        x.h - x.l,
+        Math.abs(x.h - pr.c),
+        Math.abs(x.l - pr.c)
+      );
+    }
+    let s = 0;
+    for (let i = 1; i < c.length; i++) {
+      s += tr[i];
+      if (i === p) o[i] = s / p;
+      else if (i > p) o[i] = (o[i - 1] * (p - 1) + tr[i]) / p;
+    }
+    return o;
+  },
+
+  ema(c, p) {
+    const o = new Array(c.length).fill(null);
+    if (c.length < p) return o;
+    const k = 2 / (p + 1);
+    let s = 0;
+    for (let i = 0; i < p; i++) s += c[i].c;
+    o[p - 1] = s / p;
+    for (let i = p; i < c.length; i++) {
+      o[i] = c[i].c * k + o[i - 1] * (1 - k);
+    }
+    return o;
+  },
+
+  sma(c, p, i) {
+    if (i < p - 1) return null;
+    let s = 0;
+    for (let k = i - p + 1; k <= i; k++) s += c[k].c;
+    return s / p;
+  },
+
+  std(c, p, i, m) {
+    if (m == null) return null;
+    let q = 0;
+    for (let k = i - p + 1; k <= i; k++) q += (c[k].c - m) ** 2;
+    return Math.sqrt(q / p);
+  },
+
+  volAvg(c, p, i) {
+    if (i < p) return null;
+    let s = 0;
+    for (let k = i - p; k < i; k++) s += c[k].v;
+    return s / p;
+  },
+
+  adx(c, p = 14) {
+    const n = c.length;
+    const o = new Array(n).fill(null);
+    if (n < p * 2 + 1) return o;
+
+    const tr = new Array(n).fill(0);
+    const pdm = new Array(n).fill(0);
+    const mdm = new Array(n).fill(0);
+
+    for (let i = 1; i < n; i++) {
+      const up = c[i].h - c[i - 1].h;
+      const dn = c[i - 1].l - c[i].l;
+      pdm[i] = (up > dn && up > 0) ? up : 0;
+      mdm[i] = (dn > up && dn > 0) ? dn : 0;
+      tr[i] = Math.max(
+        c[i].h - c[i].l,
+        Math.abs(c[i].h - c[i - 1].c),
+        Math.abs(c[i].l - c[i - 1].c)
+      );
+    }
+
+    let atrS = 0, plusS = 0, minusS = 0;
+    for (let i = 1; i <= p; i++) {
+      atrS += tr[i];
+      plusS += pdm[i];
+      minusS += mdm[i];
+    }
+    atrS /= p; plusS /= p; minusS /= p;
+
+    const dxList = [];
+    for (let i = p; i < n; i++) {
+      if (i > p) {
+        atrS = (atrS * (p - 1) + tr[i]) / p;
+        plusS = (plusS * (p - 1) + pdm[i]) / p;
+        minusS = (minusS * (p - 1) + mdm[i]) / p;
+      }
+      if (atrS === 0) { dxList.push({ i, dx: 0 }); continue; }
+      const pDI = 100 * plusS / atrS;
+      const mDI = 100 * minusS / atrS;
+      const dx = (pDI + mDI) > 0 ? 100 * Math.abs(pDI - mDI) / (pDI + mDI) : 0;
+      dxList.push({ i, dx });
+    }
+
+    if (dxList.length < p) return o;
+    let av = 0;
+    for (let k = 0; k < p; k++) av += dxList[k].dx;
+    av /= p;
+    o[dxList[p - 1].i] = av;
+    for (let k = p; k < dxList.length; k++) {
+      av = (av * (p - 1) + dxList[k].dx) / p;
+      o[dxList[k].i] = av;
+    }
+    return o;
+  },
+};
+
+function getRegime(adxVal) {
+  if (adxVal == null) return 'unknown';
+  if (adxVal >= ADX_TRENDING) return 'trending';
+  if (adxVal <= ADX_RANGING) return 'ranging';
+  return 'transition';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SMC ENGINE
+   ═══════════════════════════════════════════════════════════════ */
+function findPivots(c, L = 3, R = 3) {
+  const out = [];
+  for (let i = L; i < c.length - R; i++) {
+    let isH = true, isL = true;
+    for (let j = i - L; j <= i + R; j++) {
+      if (j === i) continue;
+      if (c[j].h >= c[i].h) isH = false;
+      if (c[j].l <= c[i].l) isL = false;
+    }
+    if (isH) out.push({ idx: i, price: c[i].h, type: 'H' });
+    if (isL) out.push({ idx: i, price: c[i].l, type: 'L' });
+  }
+  return out;
+}
+
+function analyzeSMC(c, L = 3, R = 3) {
+  const pivots = findPivots(c, L, R);
+  const events = [];
+  const activeH = [];
+  const activeL = [];
+  const pendingSweeps = [];
+  let trend = null;
+  let ptr = 0;
+  let bosCtx = null;
+
+  for (let i = 0; i < c.length; i++) {
+    /* Load new pivots */
+    while (ptr < pivots.length && pivots[ptr].idx + R <= i) {
+      const p = pivots[ptr];
+      (p.type === 'H' ? activeH : activeL).push(p);
+      ptr++;
+    }
+
+    const bar = c[i];
+    if (bosCtx && i > bosCtx.expiresAt) bosCtx = null;
+
+    /* Pending sweeps resolution */
+    for (let j = pendingSweeps.length - 1; j >= 0; j--) {
+      const ps = pendingSweeps[j];
+      if (i > ps.expiresAt) { pendingSweeps.splice(j, 1); continue; }
+      if (i <= ps.wickIdx) continue;
+      const reclaimed =
+        (ps.dir === 'long' && bar.c > ps.level) ||
+        (ps.dir === 'short' && bar.c < ps.level);
+      if (reclaimed) {
+        events.push({
+          idx: i, type: 'SWEEP', dir: ps.dir,
+          level: ps.level, levelIdx: ps.levelIdx,
+          wick: ps.wickPrice, wickIdx: ps.wickIdx,
+          sweepDepth: Math.abs(pct(ps.wickPrice, ps.level)),
+          reclaimBars: i - ps.wickIdx,
+          failedBOS: !!ps.afterBOS,
+        });
+        pendingSweeps.splice(j, 1);
+      }
+    }
+
+    const lastH = activeH[activeH.length - 1];
+    const lastL = activeL[activeL.length - 1];
+
+    /* Bullish structure break */
+    if (lastH && lastH.idx < i && bar.c > lastH.price) {
+      const isCHoCH = trend === 'bear';
+      events.push({
+        idx: i,
+        type: isCHoCH ? 'CHoCH' : 'BOS',
+        dir: 'long',
+        level: lastH.price,
+        levelIdx: lastH.idx,
+        displacement: (bar.c - lastH.price) / lastH.price,
+      });
+      for (let j = activeH.length - 1; j >= 0; j--) {
+        if (activeH[j].price <= bar.c) activeH.splice(j, 1);
+      }
+      trend = 'bull';
+      bosCtx = { dir: 'long', level: lastH.price, expiresAt: i + SWEEP_RECLAIM_BARS };
+      pendingSweeps.push({
+        dir: 'short', level: lastH.price, levelIdx: lastH.idx,
+        wickPrice: bar.h, wickIdx: i,
+        expiresAt: i + SWEEP_RECLAIM_BARS, afterBOS: true,
+      });
+    }
+    /* Bearish structure break */
+    else if (lastL && lastL.idx < i && bar.c < lastL.price) {
+      const isCHoCH = trend === 'bull';
+      events.push({
+        idx: i,
+        type: isCHoCH ? 'CHoCH' : 'BOS',
+        dir: 'short',
+        level: lastL.price,
+        levelIdx: lastL.idx,
+        displacement: (lastL.price - bar.c) / lastL.price,
+      });
+      for (let j = activeL.length - 1; j >= 0; j--) {
+        if (activeL[j].price >= bar.c) activeL.splice(j, 1);
+      }
+      trend = 'bear';
+      bosCtx = { dir: 'short', level: lastL.price, expiresAt: i + SWEEP_RECLAIM_BARS };
+      pendingSweeps.push({
+        dir: 'long', level: lastL.price, levelIdx: lastL.idx,
+        wickPrice: bar.l, wickIdx: i,
+        expiresAt: i + SWEEP_RECLAIM_BARS, afterBOS: true,
+      });
+    }
+
+    const isSuppressed = sw =>
+      bosCtx && Math.abs(sw.price - bosCtx.level) / bosCtx.level < 1e-5;
+
+    /* Sweep long (wick below) */
+    for (let j = activeL.length - 1; j >= 0; j--) {
+      const sw = activeL[j];
+      if (sw.idx >= i) continue;
+      if (bar.l < sw.price) {
+        if (!isSuppressed(sw)) {
+          if (bar.c > sw.price) {
+            events.push({
+              idx: i, type: 'SWEEP', dir: 'long',
+              level: sw.price, levelIdx: sw.idx,
+              wick: bar.l, wickIdx: i,
+              sweepDepth: Math.abs(pct(bar.l, sw.price)),
+              reclaimBars: 0,
+            });
+          } else {
+            pendingSweeps.push({
+              dir: 'long', level: sw.price, levelIdx: sw.idx,
+              wickPrice: bar.l, wickIdx: i,
+              expiresAt: i + SWEEP_RECLAIM_BARS, afterBOS: false,
+            });
+          }
+        }
+        activeL.splice(j, 1);
+        break;
+      }
+    }
+
+    /* Sweep short (wick above) */
+    for (let j = activeH.length - 1; j >= 0; j--) {
+      const sw = activeH[j];
+      if (sw.idx >= i) continue;
+      if (bar.h > sw.price) {
+        if (!isSuppressed(sw)) {
+          if (bar.c < sw.price) {
+            events.push({
+              idx: i, type: 'SWEEP', dir: 'short',
+              level: sw.price, levelIdx: sw.idx,
+              wick: bar.h, wickIdx: i,
+              sweepDepth: Math.abs(pct(bar.h, sw.price)),
+              reclaimBars: 0,
+            });
+          } else {
+            pendingSweeps.push({
+              dir: 'short', level: sw.price, levelIdx: sw.idx,
+              wickPrice: bar.h, wickIdx: i,
+              expiresAt: i + SWEEP_RECLAIM_BARS, afterBOS: false,
+            });
+          }
+        }
+        activeH.splice(j, 1);
+        break;
+      }
+    }
+
+    /* Order block detection on BOS/CHoCH */
+    const bosList = events.filter(e => e.idx === i && (e.type === 'BOS' || e.type === 'CHoCH'));
+    for (const b of bosList) {
+      let obIdx = i - 1;
+      const limit = Math.max(0, i - 10);
+
+      if (b.dir === 'long') {
+        while (obIdx > limit && c[obIdx].c >= c[obIdx].o) obIdx--;
+        if (obIdx > 0 && c[obIdx].c < c[obIdx].o) {
+          const vA = IND.volAvg(c, 20, obIdx);
+          if (vA && c[obIdx].v < vA * 1.15) continue;
+          events.push({
+            idx: i, type: 'OB', dir: 'long',
+            obIdx,
+            obTop: c[obIdx].h,
+            obBot: c[obIdx].l,
+            bornIdx: i,
+          });
+        }
+      } else {
+        while (obIdx > limit && c[obIdx].c <= c[obIdx].o) obIdx--;
+        if (obIdx > 0 && c[obIdx].c > c[obIdx].o) {
+          const vA = IND.volAvg(c, 20, obIdx);
+          if (vA && c[obIdx].v < vA * 1.15) continue;
+          events.push({
+            idx: i, type: 'OB', dir: 'short',
+            obIdx,
+            obTop: c[obIdx].h,
+            obBot: c[obIdx].l,
+            bornIdx: i,
+          });
+        }
+      }
+    }
+  }
+
+  /* OB retest resolution */
+  const finalEvents = [];
+  for (const e of events) {
+    if (e.type !== 'OB') { finalEvents.push(e); continue; }
+
+    let retestIdx = -1;
+    let invalidated = false;
+    for (let k = e.bornIdx + 1; k < Math.min(e.bornIdx + MAX_OB_AGE, c.length); k++) {
+      const bar = c[k];
+      if (e.dir === 'long') {
+        if (bar.c < e.obBot) { invalidated = true; break; }
+        if (bar.l <= e.obTop && bar.c > e.obTop) { retestIdx = k; break; }
+      } else {
+        if (bar.c > e.obTop) { invalidated = true; break; }
+        if (bar.h >= e.obBot && bar.c < e.obBot) { retestIdx = k; break; }
+      }
+    }
+    if (retestIdx > 0 && !invalidated) {
+      finalEvents.push({
+        idx: retestIdx, type: 'OB', dir: e.dir,
+        obTop: e.obTop, obBot: e.obBot,
+        obIdx: e.obIdx, bornIdx: e.bornIdx,
+        age: retestIdx - e.bornIdx,
+      });
+    }
+  }
+
+  return { events: finalEvents, trend };
+}
+
+/* ─── PDH/PDL Sweep ─── */
+function detectPDSweep(c) {
+  const signals = [];
+  if (!c.length) return signals;
+
+  const DAY = 86400000;
+  const cfg = STRATEGY_CONFIG.PD;
+
+  let currDay = Math.floor(c[0].t / DAY);
+  let dayHigh = c[0].h;
+  let dayLow = c[0].l;
+  let prevHigh = null;
+  let prevLow = null;
+
+  for (let i = 1; i < c.length; i++) {
+    const bar = c[i];
+    const day = Math.floor(bar.t / DAY);
+
+    if (day !== currDay) {
+      prevHigh = dayHigh;
+      prevLow = dayLow;
+      currDay = day;
+      dayHigh = bar.h;
+      dayLow = bar.l;
+      continue;
+    }
+
+    if (prevHigh !== null) {
+      const depthH = Math.abs(pct(bar.h, prevHigh));
+      const depthL = Math.abs(pct(bar.l, prevLow));
+
+      if (bar.h > prevHigh && bar.c < prevHigh && bar.h > bar.o && depthH >= cfg.minSweepDepth) {
+        signals.push({
+          idx: i, type: 'PD', dir: 'short',
+          level: prevHigh, wick: bar.h,
+          sweepDepth: depthH, pdType: 'PDH',
+        });
+      }
+      if (bar.l < prevLow && bar.c > prevLow && bar.l < bar.o && depthL >= cfg.minSweepDepth) {
+        signals.push({
+          idx: i, type: 'PD', dir: 'long',
+          level: prevLow, wick: bar.l,
+          sweepDepth: depthL, pdType: 'PDL',
+        });
+      }
+    }
+
+    dayHigh = Math.max(dayHigh, bar.h);
+    dayLow = Math.min(dayLow, bar.l);
+  }
+  return signals;
+}
+
+/* ─── VWAP (anchored to 21:00 UTC = NY close) ─── */
+function detectVWAP(c) {
+  const signals = [];
+  if (!c.length) return signals;
+
+  const DAY = 86400000;
+  const ANCHOR_OFFSET = 3 * 3600 * 1000; // shift so day boundary = 21:00 UTC
+
+  let currDay = -1;
+  let cumPV = 0;
+  let cumV = 0;
+  let vwapArr = [];
+  let armedLong = true;
+  let armedShort = true;
+  let barsInDay = 0;
+
+  for (let i = 0; i < c.length; i++) {
+    const bar = c[i];
+    const day = Math.floor((bar.t + ANCHOR_OFFSET) / DAY);
+
+    if (day !== currDay) {
+      currDay = day;
+      cumPV = 0;
+      cumV = 0;
+      armedLong = true;
+      armedShort = true;
+      barsInDay = 0;
+    }
+    barsInDay++;
+
+    const typical = (bar.h + bar.l + bar.c) / 3;
+    cumPV += typical * bar.v;
+    cumV += bar.v;
+    const vwap = cumV > 0 ? cumPV / cumV : bar.c;
+    vwapArr.push(vwap);
+
+    if (barsInDay < 5 || i < 1) continue;
+
+    const pB = c[i - 1];
+    const pV = vwapArr[i - 1] || vwap;
+    const pAbove = pB.c > pV;
+    const nAbove = bar.c > vwap;
+
+    if (!armedLong && !nAbove) armedLong = true;
+    if (!armedShort && nAbove) armedShort = true;
+
+    if (armedLong && !pAbove && nAbove && bar.c > bar.o) {
+      signals.push({
+        idx: i, type: 'VWAP', dir: 'long',
+        level: vwap, crossType: 'reclaim', vwapVal: vwap,
+      });
+      armedLong = false;
+    } else if (armedShort && pAbove && !nAbove && bar.c < bar.o) {
+      signals.push({
+        idx: i, type: 'VWAP', dir: 'short',
+        level: vwap, crossType: 'reject', vwapVal: vwap,
+      });
+      armedShort = false;
+    }
+  }
+  return signals;
+}
+
+/* ─── FVG ─── */
+function detectFVG(c) {
+  const signals = [];
+  let active = [];
+
+  for (let i = 2; i < c.length; i++) {
+    const c2 = c[i - 2];
+    const c0 = c[i];
+
+    if (c2.h < c0.l) active.push({ dir: 'long', top: c0.l, bot: c2.h, formIdx: i - 1, bornIdx: i });
+    if (c2.l > c0.h) active.push({ dir: 'short', top: c2.l, bot: c0.h, formIdx: i - 1, bornIdx: i });
+
+    const bar = c[i];
+    active = active.filter(f => i - f.bornIdx <= MAX_FVG_AGE);
+
+    for (let j = active.length - 1; j >= 0; j--) {
+      const f = active[j];
+      if (f.bornIdx >= i) continue;
+
+      const h = f.top - f.bot;
+      if (h <= 0) { active.splice(j, 1); continue; }
+
+      if (f.dir === 'long') {
+        if (bar.c < f.bot) { active.splice(j, 1); continue; }
+        if (bar.l <= f.top && bar.c > f.top) {
+          signals.push({
+            idx: i, type: 'FVG', dir: 'long',
+            fvgTop: f.top, fvgBot: f.bot,
+            formIdx: f.formIdx, gapSize: h / f.bot,
+          });
+          active.splice(j, 1);
+        }
+      } else {
+        if (bar.c > f.top) { active.splice(j, 1); continue; }
+        if (bar.h >= f.bot && bar.c < f.bot) {
+          signals.push({
+            idx: i, type: 'FVG', dir: 'short',
+            fvgTop: f.top, fvgBot: f.bot,
+            formIdx: f.formIdx, gapSize: h / f.top,
+          });
+          active.splice(j, 1);
+        }
+      }
+    }
+  }
+  return signals;
+}
+
+/* ─── BB Mean-Reversion ─── */
+function detectBBMR(c, rsiArr) {
+  const sig = [];
+  let armedLong = true;
+  let armedShort = true;
+
+  for (let i = 20; i < c.length; i++) {
+    const mean = IND.sma(c, 20, i);
+    const sd = IND.std(c, 20, i, mean);
+    const r = rsiArr[i];
+    if (mean == null || sd == null || r == null || sd === 0) continue;
+
+    const upper = mean + 2 * sd;
+    const lower = mean - 2 * sd;
+    const bar = c[i];
+
+    if (r > 45) armedLong = true;
+    if (r < 55) armedShort = true;
+
+    if (bar.c < lower && r < 35 && armedLong) {
+      sig.push({
+        idx: i, type: 'MR', dir: 'long',
+        bbLower: lower, bbUpper: upper, bbMid: mean,
+        ext: (lower - bar.c) / sd,
+      });
+      armedLong = false;
+    } else if (bar.c > upper && r > 65 && armedShort) {
+      sig.push({
+        idx: i, type: 'MR', dir: 'short',
+        bbLower: lower, bbUpper: upper, bbMid: mean,
+        ext: (bar.c - upper) / sd,
+      });
+      armedShort = false;
+    }
+  }
+  return sig;
+}
+
+/* ─── RSI Extreme ─── */
+function detectRSIExtreme(c, rsiArr) {
+  const sig = [];
+  let armedLong = true;
+  let armedShort = true;
+
+  for (let i = 14; i < c.length; i++) {
+    const r = rsiArr[i];
+    const rP = rsiArr[i - 1];
+    if (r == null || rP == null) continue;
+
+    const bar = c[i];
+    const bull = bar.c > bar.o;
+
+    if (r > 40) armedLong = true;
+    if (r < 60) armedShort = true;
+
+    if (r < 25 && r > rP && bull && armedLong) {
+      sig.push({ idx: i, type: 'RSI', dir: 'long' });
+      armedLong = false;
+    } else if (r > 75 && r < rP && !bull && armedShort) {
+      sig.push({ idx: i, type: 'RSI', dir: 'short' });
+      armedShort = false;
+    }
+  }
+  return sig;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENRICH SIGNAL
+   ═══════════════════════════════════════════════════════════════ */
+function enrichSignal(sig, c, ctx) {
+  const { atr, rsiArr, entryMode, adxArr, tf } = ctx;
+  const i = sig.idx;
+  const bar = c[i];
+  const cfg = STRATEGY_CONFIG[sig.type] || {};
+  const atrV = atr[i] ?? (bar.h - bar.l) ?? bar.c * 0.001;
+
+  /* Entry timing */
+  const entryBarIdx = entryMode === 'next-open' ? i + 1 : i;
+  if (entryBarIdx >= c.length) { sig._skip = true; return sig; }
+
+  const entry = entryMode === 'next-open' ? c[entryBarIdx].o : bar.c;
+  sig.entryBarIdx = entryBarIdx;
+
+  /* SL buffer */
+  if (sig.wick != null && Math.abs(sig.wick - entry) < atrV * 0.05) sig.wick = null;
+  const slBuf = atrV * 0.4;
+
+  /* Stop loss candidates */
+  let stop;
+  if (sig.dir === 'long') {
+    const cands = [];
+    if (sig.wick != null) cands.push(sig.wick);
+    if (sig.level != null) cands.push(sig.level);
+    if (sig.fvgBot != null) cands.push(sig.fvgBot);
+    if (sig.obBot != null) cands.push(sig.obBot);
+    if (sig.bbLower != null) cands.push(sig.bbLower);
+    if (!cands.length) {
+      let lo = Infinity;
+      for (let k = Math.max(0, i - 8); k <= i; k++) lo = Math.min(lo, c[k].l);
+      cands.push(lo);
+    }
+    stop = Math.min(...cands) - slBuf;
+  } else {
+    const cands = [];
+    if (sig.wick != null) cands.push(sig.wick);
+    if (sig.level != null) cands.push(sig.level);
+    if (sig.fvgTop != null) cands.push(sig.fvgTop);
+    if (sig.obTop != null) cands.push(sig.obTop);
+    if (sig.bbUpper != null) cands.push(sig.bbUpper);
+    if (!cands.length) {
+      let hi = -Infinity;
+      for (let k = Math.max(0, i - 8); k <= i; k++) hi = Math.max(hi, c[k].h);
+      cands.push(hi);
+    }
+    stop = Math.max(...cands) + slBuf;
+  }
+
+  const minRiskAtr = cfg.minRiskAtr ?? 0.7;
+  const targetAtr = cfg.targetAtr ?? 2.2;
+  const targetRR = (cfg.targetRRByTF && cfg.targetRRByTF[tf]) || cfg.targetRR || 1.8;
+
+  const minRisk = atrV * minRiskAtr;
+  let rawRisk = Math.abs(entry - stop);
+  let riskFloored = false;
+  if (rawRisk < minRisk) {
+    riskFloored = true;
+    stop = sig.dir === 'long' ? entry - minRisk : entry + minRisk;
+    rawRisk = minRisk;
+  }
+  const risk = rawRisk;
+
+  const targetDist = Math.max(risk * targetRR, atrV * targetAtr);
+  const target = sig.dir === 'long' ? entry + targetDist : entry - targetDist;
+  const rr = targetDist / risk;
+  const riskPct = risk / entry * 100;
+  const rewardPct = targetDist / entry * 100;
+  const feeRatio = activeFee() / (risk / entry);
+
+  /* Context metrics */
+  const vA = IND.volAvg(c, 20, i);
+  const volRatio = vA && vA > 0 ? bar.v / vA : 1;
+  const bodySz = Math.abs(bar.c - bar.o);
+  const rangeSz = bar.h - bar.l;
+  const displacement = rangeSz > 0 ? bodySz / rangeSz : 0;
+  const qVol = volRatio >= 1.5;
+  const qDispl = displacement >= 0.7;
+
+  const adxVal = adxArr ? adxArr[i] : null;
+  const regime = getRegime(adxVal);
+
+  /* Confidence scoring */
+  const reasons = [];
+  let score = 1;
+  reasons.push({ l: `Base ${sig.type}`, p: 1 });
+
+  if (volRatio >= 2.8) { score += 2; reasons.push({ l: 'Volume extreme', p: 2 }); }
+  else if (volRatio >= 1.8) { score += 1; reasons.push({ l: 'Volume surge', p: 1 }); }
+  else if (volRatio >= 1.3) { score += 1; reasons.push({ l: 'Above-avg vol', p: 1 }); }
+
+  if (displacement >= 0.65) { score += 1; reasons.push({ l: 'Strong displ', p: 1 }); }
+  if (sig.type === 'SWEEP' && sig.sweepDepth >= 0.05) { score += 1; reasons.push({ l: 'Deep sweep', p: 1 }); }
+  if (sig.type === 'PD' && sig.sweepDepth >= 0.05) { score += 1; reasons.push({ l: `Deep ${sig.pdType}`, p: 1 }); }
+  if (sig.failedBOS) { score += 1; reasons.push({ l: 'Failed BOS', p: 1 }); }
+  if (sig.type === 'OB' && sig.age <= 15) { score += 1; reasons.push({ l: 'Fresh OB', p: 1 }); }
+  if (sig.type === 'FVG' && sig.gapSize >= 0.0006) { score += 1; reasons.push({ l: 'Large imb', p: 1 }); }
+  if (sig.type === 'MR' && sig.ext >= 0.4) { score += 1; reasons.push({ l: 'Extreme dev', p: 1 }); }
+  if (sig.type === 'VWAP' && volRatio >= 1.5 && displacement >= 0.6) {
+    score += 1;
+    reasons.push({ l: 'High-conv cross', p: 1 });
+  }
+
+  /* Regime tilt */
+  const bias = cfg.trendBias || 'both';
+  if (STATE.regimeFilter) {
+    if (regime === 'trending' && bias === 'with') {
+      score += 1; reasons.push({ l: 'Trend regime ✓', p: 1 });
+    } else if (regime === 'trending' && bias === 'counter') {
+      score -= 1; reasons.push({ l: '⚠ Against trend', p: -1 });
+    } else if (regime === 'ranging' && bias === 'counter') {
+      score += 1; reasons.push({ l: 'Range regime ✓', p: 1 });
+    } else if (regime === 'ranging' && bias === 'with') {
+      score -= 1; reasons.push({ l: '⚠ Weak trend', p: -1 });
+    }
+  }
+
+  if (riskFloored) reasons.push({ l: 'SL floored', p: 0 });
+  score = Math.max(1, score);
+
+  Object.assign(sig, {
+    entry, stop, target,
+    rr: Math.round(rr * 100) / 100,
+    atr: atrV, volRatio, displacement,
+    conf: score, confReasons: reasons,
+    confStars: clamp(score, 1, 5),
+    rsi: rsiArr[i] ?? null,
+    riskFloored, regime, adx: adxVal,
+    riskPct, rewardPct, feeRatio,
+    qVolume: qVol, qDispl,
+    qualityFactors: [qVol, qDispl],
+    outcome: null,
+  });
+  return sig;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MTF CONFLUENCE
+   ═══════════════════════════════════════════════════════════════ */
+function applyMTFConfluence(allData) {
+  for (let i = 0; i < TF_LIST.length; i++) {
+    const tf = TF_LIST[i];
+    const d = allData[tf];
+    if (!d) continue;
+
+    const ltfMs = TF_MS[tf];
+    const higher = TF_LIST.slice(i + 1);
+
+    for (const sig of d.signals) {
+      const ltfClosedAt = sig.t + ltfMs;
+      const window = ltfMs * 3;
+      const aligned = [];
+
+      for (const htf of higher) {
+        const hd = allData[htf];
+        if (!hd) continue;
+        const htfMs = TF_MS[htf];
+
+        const m = hd.signals.find(s => {
+          if (s.dir !== sig.dir) return false;
+          if (STATE.weekendFilter && !isTradingTime(s.t)) return false;
+          if (STATE.killZoneFilter && !isKillZone(s.t)) return false;
+          const htfClosedAt = s.t + htfMs;
+          if (htfClosedAt > ltfClosedAt) return false;
+          if (ltfClosedAt - htfClosedAt >= window) return false;
+          return true;
+        });
+        if (m) aligned.push({ tf: htf, sig: m });
+      }
+
+      sig.htfAligned = aligned;
+      sig.qHTF = aligned.length > 0;
+      sig.qualityFactors = [sig.qVolume, sig.qDispl, sig.qHTF];
+      sig.qualityCount = sig.qualityFactors.filter(Boolean).length;
+
+      sig.confReasons = sig.confReasons.filter(r => !r.l.startsWith('HTF'));
+      let baseConf = 1;
+      for (const r of sig.confReasons) {
+        if (!r.l.startsWith('Base')) baseConf += r.p;
+      }
+      if (aligned.length) {
+        sig.confReasons.push({
+          l: `HTF: ${aligned.map(a => a.tf.toUpperCase()).join(' · ')}`,
+          p: 1,
+        });
+        baseConf += 1;
+      }
+      sig.conf = Math.max(1, baseConf);
+      sig.confStars = clamp(baseConf, 1, 5);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVALUATE SIGNAL
+   ═══════════════════════════════════════════════════════════════ */
+function evaluateSignal(sig, candles, tf) {
+  const cfg = STRATEGY_CONFIG[sig.type] || {};
+  const maxHold = (cfg.maxHold && cfg.maxHold[tf]) || 30;
+  const beAtR = cfg.breakevenAtR != null ? cfg.breakevenAtR : null;
+
+  const { entry, target } = sig;
+  let currentStop = sig.stop;
+  const dir = sig.dir === 'long' ? 1 : -1;
+  const riskDist = Math.abs(entry - sig.stop);
+
+  const beLevel = dir === 1
+    ? entry + riskDist * (beAtR || 999)
+    : entry - riskDist * (beAtR || 999);
+  let beHit = false;
+
+  const entryBar = sig.entryBarIdx != null ? sig.entryBarIdx : sig.idx;
+  const startIdx = entryBar + 1;
+  const lastIdx = candles.length - 1;
+  if (startIdx > lastIdx) return { status: 'open', reason: 'no-bars' };
+
+  /* First bar gap check */
+  const first = candles[startIdx];
+  if (dir === 1) {
+    if (first.o <= currentStop) return mk('loss', startIdx, first.o, first.t, 'gap');
+    if (first.o >= target) return mk('win', startIdx, first.o, first.t, 'gap');
+  } else {
+    if (first.o >= currentStop) return mk('loss', startIdx, first.o, first.t, 'gap');
+    if (first.o <= target) return mk('win', startIdx, first.o, first.t, 'gap');
+  }
+
+  const endIdx = Math.min(startIdx + maxHold - 1, lastIdx);
+  for (let i = startIdx; i <= endIdx; i++) {
+    const c = candles[i];
+    if (STATE.weekendFilter && !isTradingTime(c.t)) continue;
+
+    let hitSL, hitTP;
+    if (dir === 1) {
+      hitSL = c.l <= currentStop;
+      hitTP = c.h >= target;
+    } else {
+      hitSL = c.h >= currentStop;
+      hitTP = c.l <= target;
+    }
+
+    /* Same-bar: conservative loss */
+    if (hitSL && hitTP) {
+      return mk(beHit ? 'breakeven' : 'loss', i, currentStop, c.t, 'same-bar');
+    }
+    if (hitSL) return mk(beHit ? 'breakeven' : 'loss', i, currentStop, c.t);
+    if (hitTP) return mk('win', i, target, c.t);
+
+    /* Breakeven move */
+    if (beAtR != null && !beHit) {
+      const hitBE = dir === 1 ? c.h >= beLevel : c.l <= beLevel;
+      if (hitBE) {
+        currentStop = entry;
+        beHit = true;
+      }
+    }
+  }
+
+  /* Expire after max hold */
+  let tb = 0;
+  for (let i = startIdx; i <= lastIdx; i++) {
+    if (STATE.weekendFilter && !isTradingTime(candles[i].t)) continue;
+    tb++;
+    if (tb >= maxHold) {
+      return mk('expired', i, candles[i].c, candles[i].t);
+    }
+  }
+  return { status: 'open', reason: 'not-enough' };
+}
+
+function mk(status, exitIdx, exitPrice, exitT, note) {
+  return { status, exitIdx, exitPrice, exitT, note };
+}
+
+function computePnL(sig, gross = false) {
+  if (!sig.outcome || sig.outcome.status === 'open') return null;
+  const dir = sig.dir === 'long' ? 1 : -1;
+  const gr = dir * (sig.outcome.exitPrice - sig.entry) / sig.entry;
+  const net = gross ? gr : gr - activeFee();
+  const entryBar = sig.entryBarIdx != null ? sig.entryBarIdx : sig.idx;
+  return {
+    grossPct: gr * 100,
+    netPct: net * 100,
+    barsHeld: sig.outcome.exitIdx - entryBar,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANALYZE TIMEFRAME
+   ═══════════════════════════════════════════════════════════════ */
+function analyzeTF(candles, tf) {
+  const emptyRes = {
+    signals: [],
+    trend: null,
+    filteredOut: 0,
+    filteredBySession: 0,
+    rejectedByMode: 0,
+  };
+  if (candles.length < 30) return emptyRes;
+
+  const mode = EXPERIMENTS[STATE.mode];
+  const rsiArr = IND.rsi(candles, 14);
+  const atrArr = IND.atr(candles, 14);
+  const adxArr = IND.adx(candles, ADX_PERIOD);
+  const emaArr = mode.emaFilterLen ? IND.ema(candles, mode.emaFilterLen) : null;
+
+  const ctx = {
+    atr: atrArr,
+    rsiArr,
+    mode,
+    entryMode: STATE.entryMode,
+    adxArr,
+    tf,
+  };
+
+  const smc = analyzeSMC(candles, 3, 3);
+  const fvgSigs = detectFVG(candles);
+  const mrSigs = detectBBMR(candles, rsiArr);
+  const rsiSigs = detectRSIExtreme(candles, rsiArr);
+  const pdSigs = STATE.pdSweepEnabled ? detectPDSweep(candles) : [];
+  const vwapSigs = STATE.vwapEnabled ? detectVWAP(candles) : [];
+
+  const all = [...smc.events, ...fvgSigs, ...mrSigs, ...rsiSigs, ...pdSigs, ...vwapSigs];
+  for (const s of all) s.t = candles[s.idx].t;
+
+  const enriched = all.map(s => {
+    const e = enrichSignal(s, candles, ctx);
+    if (e._skip) return e;
+    e.closeT = candles[e.idx].t + TF_MS[tf];
+    e.outcome = evaluateSignal(e, candles, tf);
+    return e;
+  });
+
+  /* Dedup */
+  const seen = new Set();
+  const deduped = [];
+  for (const s of enriched) {
+    if (s._skip) continue;
+    const key = `${s.idx}|${s.type}|${s.dir}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(s);
+  }
+  deduped.sort((a, b) => a.idx - b.idx);
+
+  let signals = deduped;
+  let filteredOut = 0;
+  let filteredBySession = 0;
+
+  /* Weekend filter */
+  if (STATE.weekendFilter) {
+    signals = signals.filter(s => {
+      const bar = candles[s.idx];
+      if (!isTradingTime(bar.t)) { filteredOut++; return false; }
+      return true;
+    });
+  }
+
+  /* Kill-zone filter */
+  if (STATE.killZoneFilter) {
+    signals = signals.filter(s => {
+      const bar = candles[s.idx];
+      if (!isKillZone(bar.t)) { filteredBySession++; return false; }
+      return true;
+    });
+  }
+
+  /* Regime BLOCK (only if not in TILT mode) */
+  if (STATE.regimeFilter && !STATE.regimeTilt) {
+    signals = signals.filter(s => {
+      const cfg = STRATEGY_CONFIG[s.type] || {};
+      const bias = cfg.trendBias || 'both';
+      if (bias === 'both') return true;
+      if (s.regime === 'trending' && bias === 'counter') return false;
+      if (s.regime === 'ranging' && bias === 'with') return false;
+      return true;
+    });
+  }
+
+  /* EMA filter (Mode B) */
+  let rejectedByMode = 0;
+  if (mode.emaFilterLen && emaArr) {
+    signals = signals.filter(s => {
+      const ema = emaArr[s.idx];
+      if (ema == null) { rejectedByMode++; return false; }
+      const bar = candles[s.idx];
+      if (s.dir === 'long' && bar.c < ema) { rejectedByMode++; return false; }
+      if (s.dir === 'short' && bar.c > ema) { rejectedByMode++; return false; }
+      return true;
+    });
+  }
+
+  return {
+    signals,
+    trend: smc.trend,
+    atr: atrArr,
+    filteredOut,
+    filteredBySession,
+    rejectedByMode,
+  };
+}
+
+function applyModeFilter() {
+  const mode = EXPERIMENTS[STATE.mode];
+  if (!mode.minQualityFactors || mode.minQualityFactors <= 0) return;
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d) continue;
+    d.signals = d.signals.filter(s => (s.qualityCount || 0) >= mode.minQualityFactors);
+  }
+}
+
+function reanalyzeAll() {
+  const next = {};
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d || !d.candles.length) continue;
+    const res = analyzeTF(d.candles, tf);
+    next[tf] = {
+      candles: d.candles,
+      signals: res.signals,
+      trend: res.trend,
+      atr: res.atr,
+    };
+  }
+  STATE.data = next;
+  applyMTFConfluence(STATE.data);
+  applyModeFilter();
+  STATE.testResults = null;
+  invalidateMedalCache();
+  sigLog(
+    `Reanalyze · WKND ${STATE.weekendFilter ? 'ON' : 'OFF'}` +
+    ` · KZ ${STATE.killZoneFilter ? 'ON' : 'OFF'}` +
+    ` · REGIME ${STATE.regimeFilter ? (STATE.regimeTilt ? 'TILT' : 'BLOCK') : 'OFF'}` +
+    ` · ENTRY ${STATE.entryMode.toUpperCase()}`,
+    'ok'
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATISTICS
+   ═══════════════════════════════════════════════════════════════ */
+function aggregateStats(signals, gross = false) {
+  const closed = [];
+  const wins = [];
+  const losses = [];
+  const expired = [];
+  const breakevens = [];
+  const open = [];
+
+  for (const s of signals) {
+    if (!s.outcome || s.outcome.status === 'open') { open.push(s); continue; }
+    closed.push(s);
+    if (s.outcome.status === 'win') wins.push(s);
+    else if (s.outcome.status === 'loss') losses.push(s);
+    else if (s.outcome.status === 'breakeven') breakevens.push(s);
+    else expired.push(s);
+  }
+
+  const n = closed.length;
+  const decided = wins.length + losses.length;
+  const wr = decided > 0 ? wins.length / decided * 100 : 0;
+
+  let gp = 0, gl = 0, expSum = 0, eq = 1, peak = 1, dd = 0;
+  for (const s of closed) {
+    const p = computePnL(s, gross);
+    if (!p) continue;
+    expSum += p.netPct;
+    eq *= (1 + p.netPct / 100);
+    peak = Math.max(peak, eq);
+    dd = Math.max(dd, (peak - eq) / peak);
+    if (p.netPct > 0) gp += p.netPct;
+    else gl += -p.netPct;
+  }
+
+  const pf = gl > 0 ? gp / gl : (gp > 0 ? Infinity : 0);
+  const exp = n > 0 ? expSum / n : 0;
+  const edge = (pf === Infinity || isNaN(pf) || pf === 0)
+    ? 0
+    : pf * Math.sqrt(n) * (wr / 50);
+
+  return {
+    total: signals.length,
+    closed: n,
+    open: open.length,
+    wins: wins.length,
+    losses: losses.length,
+    expired: expired.length,
+    breakevens: breakevens.length,
+    wr, pf, exp, edge,
+    totalReturn: (eq - 1) * 100,
+    dd: dd * 100,
+  };
+}
+
+function groupStats(signals, keyFn, gross) {
+  const g = new Map();
+  for (const s of signals) {
+    const k = keyFn(s);
+    if (!g.has(k)) g.set(k, []);
+    g.get(k).push(s);
+  }
+  const out = [];
+  for (const [k, arr] of g) {
+    out.push({ key: k, stats: aggregateStats(arr, gross) });
+  }
+  return out;
+}
+
+function allSignalsFlat() {
+  const all = [];
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d) continue;
+    for (const s of d.signals) all.push({ ...s, tf });
+  }
+  return all;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MEDAL RANKING
+   ═══════════════════════════════════════════════════════════════ */
+let _medalCache = null;
+let _medalCacheAt = 0;
+const MEDAL_ICONS = ['🥇', '🥈', '🥉'];
+const MEDAL_CLASSES = ['', 'rank-gold', 'rank-silver', 'rank-bronze'];
+
+function buildMatrix() {
+  const m = {};
+  for (const type of SCANNER_TYPES) m[type] = {};
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d) continue;
+    const byType = new Map();
+    for (const s of d.signals) {
+      if (!byType.has(s.type)) byType.set(s.type, []);
+      byType.get(s.type).push(s);
+    }
+    for (const [type, sigs] of byType) {
+      if (!m[type]) m[type] = {};
+      m[type][tf] = aggregateStats(sigs, false);
+    }
+  }
+  return m;
+}
+
+function buildRanking() {
+  const m = buildMatrix();
+  const items = [];
+  for (const type of SCANNER_TYPES) {
+    for (const tf of TF_LIST) {
+      const st = m[type] && m[type][tf];
+      if (!st || st.closed === 0) continue;
+      items.push({
+        type, tf, stats: st,
+        wr: st.wr, exp: st.exp,
+        pf: st.pf === Infinity ? 999 : st.pf,
+        n: st.closed,
+        edge: st.edge,
+      });
+    }
+  }
+  return items;
+}
+
+function edgeBadge(edge) {
+  if (edge >= 15) return { cls: 'edge-gem', icon: '💎', label: 'GEM' };
+  if (edge >= 8) return { cls: 'edge-strong', icon: '🔥', label: 'STRONG' };
+  if (edge >= 3) return { cls: 'edge-ok', icon: '✅', label: 'OK' };
+  if (edge > 0) return { cls: 'edge-weak', icon: '⚠️', label: 'WEAK' };
+  return { cls: 'edge-weak', icon: '❌', label: 'BAD' };
+}
+
+function getMedalMap() {
+  const now = Date.now();
+  if (_medalCache && now - _medalCacheAt < 4000) return _medalCache;
+  const items = buildRanking().filter(it => it.n >= 10);
+  items.sort((a, b) => b.edge - a.edge || b.n - a.n);
+  const map = new Map();
+  for (let i = 0; i < Math.min(3, items.length); i++) {
+    const it = items[i];
+    map.set(it.type + '|' + it.tf, {
+      rank: i + 1,
+      wr: it.wr,
+      edge: it.edge,
+      n: it.n,
+      medal: MEDAL_ICONS[i],
+      cls: MEDAL_CLASSES[i + 1],
+    });
+  }
+  _medalCache = map;
+  _medalCacheAt = now;
+  return map;
+}
+
+function invalidateMedalCache() {
+  _medalCache = null;
+  _medalCacheAt = 0;
+}
+
+function playMedalSound(rank) {
+  try {
+    if (rank === 1) {
+      beep(1318, .09);
+      setTimeout(() => beep(1568, .09), 100);
+      setTimeout(() => beep(2093, .2), 210);
+      setTimeout(() => beep(2637, .28), 400);
+    } else if (rank === 2) {
+      beep(1046, .1);
+      setTimeout(() => beep(1318, .16), 110);
+    } else {
+      beep(880, .14);
+    }
+  } catch (_) {}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WEBSOCKET + REST FALLBACK
+   ═══════════════════════════════════════════════════════════════ */
+function probeWS() {
+  return new Promise(resolve => {
+    let settled = false;
+    let ws;
+    try { ws = new WebSocket(WS_URL); }
+    catch (e) { resolve({ available: false, error: 'construct' }); return; }
+
+    const t = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      try { ws.close(); } catch (_) {}
+      resolve({ available: false, error: 'timeout' });
+    }, WS_PROBE_TIMEOUT);
+
+    ws.onopen = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(t);
+      try { ws.close(); } catch (_) {}
+      resolve({ available: true });
+    };
+    ws.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(t);
+      resolve({ available: false, error: 'error' });
+    };
+  });
+}
+
+function connectWS() {
+  if (STATE.ws) try { STATE.ws.close(); } catch (e) {}
+  stopRestPolling();
+  STATE.source = 'ws';
+  setLive(false, 'WS CONNECT');
+
+  const ws = new WebSocket(WS_URL);
+  STATE.ws = ws;
+
+  ws.onopen = () => {
+    STATE.wsRetry = 0;
+    setLive(true, 'LIVE · WS');
+  };
+
+  ws.onmessage = e => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch (_) { return; }
+    const k = msg.data && msg.data.k;
+    if (!k) return;
+
+    const tf = k.i;
+    const candle = { t: k.t, o: +k.o, h: +k.h, l: +k.l, c: +k.c, v: +k.v };
+    const d = STATE.data[tf];
+    if (!d) return;
+
+    const last = d.candles[d.candles.length - 1];
+    const prevClose = last ? last.c : candle.c;
+
+    if (last && last.t === candle.t) {
+      d.candles[d.candles.length - 1] = candle;
+    } else {
+      d.candles.push(candle);
+      const cap = getCandleTarget(tf);
+      if (d.candles.length > cap) d.candles.shift();
+    }
+
+    flashPrice(candle.c, prevClose);
+    if (STATE.page === 'terminal') {
+      scheduleChart();
+      updateMTFCell(tf, candle.c, prevClose);
+    }
+
+    /* Candle closed */
+    if (k.x) {
+      const res = analyzeTF(d.candles, tf);
+      d.signals = res.signals;
+      d.trend = res.trend;
+      d.atr = res.atr;
+      applyMTFConfluence(STATE.data);
+      applyModeFilter();
+      invalidateMedalCache();
+
+      if (STATE.page === 'terminal') {
+        renderTabs(); renderMTF(); renderSignals(); renderChart(); renderPerf();
+      } else if (STATE.page === 'scanner') {
+        renderScanner();
+      }
+      detectAndAlert(tf, d.signals);
+    } else {
+      /* Still open, just update outcomes */
+      for (const sig of d.signals) {
+        if (sig.outcome && sig.outcome.status === 'open') {
+          sig.outcome = evaluateSignal(sig, d.candles, tf);
+        }
+      }
+    }
+  };
+
+  ws.onerror = () => {};
+  ws.onclose = () => {
+    if (STATE.source === 'ws') {
+      setLive(false, 'WS RECONNECT');
+      const delay = Math.min(30000, 1000 * Math.pow(2, STATE.wsRetry++));
+      clearTimeout(STATE.wsTimer);
+      STATE.wsTimer = setTimeout(() => {
+        if (STATE.wsRetry > 3 && STATE.source === 'ws') startRestPolling();
+        else connectWS();
+      }, delay);
+    }
+  };
+}
+
+function startRestPolling() {
+  stopRestPolling();
+  if (STATE.ws) try { STATE.ws.close(); } catch (_) {}
+  STATE.ws = null;
+  STATE.source = 'rest';
+  setLive(true, 'LIVE · REST');
+
+  STATE.pollTimer = setInterval(pollCandles, POLL_INTERVAL_MS);
+  STATE.tickerTimer = setInterval(pollTicker, POLL_TICKER_MS);
+  pollCandles();
+}
+
+function stopRestPolling() {
+  if (STATE.pollTimer) { clearInterval(STATE.pollTimer); STATE.pollTimer = null; }
+  if (STATE.tickerTimer) { clearInterval(STATE.tickerTimer); STATE.tickerTimer = null; }
+}
+
+async function pollTicker() {
+  try {
+    const r = await fetch(`${REST_URL}/api/v3/ticker/24hr?symbol=${DATA_SYMBOL}`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const tk = await r.json();
+    const px = +tk.lastPrice;
+    const chg = +tk.priceChangePercent;
+    flashPrice(px, STATE.lastPrice);
+    $('chg').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    $('chg').className = 'chg ' + (chg >= 0 ? 'up' : 'dn');
+    $('hi').textContent = fmtP(+tk.highPrice);
+    $('lo').textContent = fmtP(+tk.lowPrice);
+    $('vol').textContent = (+tk.quoteVolume / 1e3).toFixed(0) + 'K';
+  } catch (_) {}
+}
+
+async function pollCandles() {
+  if (STATE.pollBusy) return;
+  STATE.pollBusy = true;
+
+  try {
+    const tasks = TF_LIST.map(tf =>
+      fetch(`${REST_URL}/api/v3/klines?symbol=${DATA_SYMBOL}&interval=${tf}&limit=2`, { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(j => ({
+          tf,
+          candles: j.map(k => ({ t: k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] })),
+        }))
+        .catch(() => null)
+    );
+
+    const rs = await Promise.all(tasks);
+    let anyUpdate = false;
+
+    for (const res of rs) {
+      if (!res || res.candles.length < 2) continue;
+      const { tf, candles } = res;
+      const d = STATE.data[tf];
+      if (!d) continue;
+
+      const latest = candles[candles.length - 1];
+      const prev = candles[candles.length - 2];
+      const stored = d.candles[d.candles.length - 1];
+      let closed = false;
+
+      if (!stored) {
+        d.candles.push(latest);
+        closed = true;
+      } else if (stored.t === latest.t) {
+        d.candles[d.candles.length - 1] = latest;
+      } else if (stored.t === prev.t) {
+        d.candles[d.candles.length - 1] = prev;
+        d.candles.push(latest);
+        const cap = getCandleTarget(tf);
+        if (d.candles.length > cap) d.candles.shift();
+        closed = true;
+      } else if (stored.t < prev.t) {
+        d.candles = d.candles.slice(0, -2).concat(candles);
+        closed = true;
+      } else {
+        d.candles[d.candles.length - 1] = latest;
+      }
+
+      /* Re-evaluate open outcomes */
+      for (const sig of d.signals) {
+        if (sig.outcome && sig.outcome.status === 'open') {
+          sig.outcome = evaluateSignal(sig, d.candles, tf);
+        }
+      }
+
+      if (closed) {
+        const rr = analyzeTF(d.candles, tf);
+        d.signals = rr.signals;
+        d.trend = rr.trend;
+        d.atr = rr.atr;
+        detectAndAlert(tf, d.signals);
+      }
+      anyUpdate = true;
+    }
+
+    if (anyUpdate) {
+      applyMTFConfluence(STATE.data);
+      applyModeFilter();
+      invalidateMedalCache();
+      if (STATE.page === 'terminal') {
+        scheduleChart(); renderTabs(); renderMTF(); renderSignals();
+        if (Math.random() < .25) renderPerf();
+      } else if (STATE.page === 'scanner') {
+        renderScanner();
+      }
+    }
+  } catch (e) {
+    /* silent */
+  } finally {
+    STATE.pollBusy = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGINATED FETCH (for small TFs > 1000 candles)
+   ═══════════════════════════════════════════════════════════════ */
+async function fetchCandlesPaginated(tf, total) {
+  const all = [];
+  let endTime = Date.now();
+  let iter = 0;
+
+  while (all.length < total && iter < PAGINATE_MAX_ITER) {
+    iter++;
+    const need = total - all.length;
+    const limit = Math.min(BINANCE_MAX_LIMIT, need);
+    const url = `${REST_URL}/api/v3/klines?symbol=${DATA_SYMBOL}&interval=${tf}&limit=${limit}&endTime=${endTime}`;
+
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error(`paginate ${tf} ${r.status}`);
+    const batch = await r.json();
+    if (!batch || !batch.length) break;
+
+    const parsed = batch.map(k => ({ t: k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }));
+    all.unshift(...parsed);
+
+    if (batch.length < limit) break;
+    endTime = batch[0][0] - 1;
+
+    if (all.length < total && iter < PAGINATE_MAX_ITER) {
+      await new Promise(r => setTimeout(r, PAGINATE_SLEEP_MS));
+    }
+  }
+  return all.slice(-total);
+}
+
+async function fetchAll() {
+  const tasks = TF_LIST.map(async tf => {
+    const target = getCandleTarget(tf);
+    if (target > BINANCE_MAX_LIMIT) {
+      const c = await fetchCandlesPaginated(tf, target);
+      sigLog(`✓ ${tf}: ${c.length}c (~${(c.length * TF_MS[tf] / 86400000).toFixed(1)}d)`, 'ok');
+      return c;
+    } else {
+      const r = await fetch(`${REST_URL}/api/v3/klines?symbol=${DATA_SYMBOL}&interval=${tf}&limit=${target}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('fetch ' + tf);
+      const j = await r.json();
+      const c = j.map(k => ({ t: k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }));
+      sigLog(`✓ ${tf}: ${c.length}c (~${(c.length * TF_MS[tf] / 86400000).toFixed(1)}d)`, 'ok');
+      return c;
+    }
+  });
+
+  const results = await Promise.all(tasks);
+  const next = {};
+  for (let i = 0; i < TF_LIST.length; i++) {
+    const tf = TF_LIST[i];
+    const candles = results[i];
+    const res = analyzeTF(candles, tf);
+    next[tf] = { candles, signals: res.signals, trend: res.trend, atr: res.atr };
+  }
+
+  STATE.data = next;
+  applyMTFConfluence(STATE.data);
+  applyModeFilter();
+  STATE.seenSignalKeys.clear();
+  for (const tf of TF_LIST) {
+    for (const s of STATE.data[tf].signals) {
+      STATE.seenSignalKeys.add(`${tf}|${s.idx}|${s.type}|${s.dir}`);
+    }
+  }
+  STATE.testResults = null;
+  invalidateMedalCache();
+}
+
+async function fetchTicker() {
+  const r = await fetch(`${REST_URL}/api/v3/ticker/24hr?symbol=${DATA_SYMBOL}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('ticker');
+  return r.json();
+}
+
+async function fetchCandles(tf, limit = 300) {
+  const r = await fetch(`${REST_URL}/api/v3/klines?symbol=${DATA_SYMBOL}&interval=${tf}&limit=${limit}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  return j.map(k => ({ t: k[0], o: +k[1], h: +k[2], l: +k[3], c: +k[4], v: +k[5] }));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TELEGRAM
+   ═══════════════════════════════════════════════════════════════ */
+async function tgCall(method, body, opts = {}) {
+  const maxRetries = opts.maxRetries ?? 3;
+  let attempt = 0;
+  let lastErr;
+
+  while (attempt <= maxRetries) {
+    try {
+      if (!STATE.tg.token) throw new Error('Token kosong');
+      const url = `https://api.telegram.org/bot${STATE.tg.token}/${method}`;
+      const isFd = body instanceof FormData;
+      const r = await fetch(url, {
+        method: 'POST',
+        body: isFd ? body : JSON.stringify(body),
+        headers: isFd ? undefined : { 'Content-Type': 'application/json' },
+      });
+      const j = await r.json();
+
+      if (!j.ok) {
+        const isRL = j.error_code === 429 || (j.parameters && j.parameters.retry_after);
+        if (isRL && attempt < maxRetries) {
+          const waitSec = (j.parameters && j.parameters.retry_after) || (2 ** attempt);
+          sigLog(`⚠ Rate limit — retry ${waitSec}s`, 'warn');
+          await new Promise(r => setTimeout(r, waitSec * 1000));
+          attempt++;
+          continue;
+        }
+        throw new Error(j.description || `TG ${j.error_code}`);
+      }
+      return j.result;
+    } catch (e) {
+      lastErr = e;
+      if (attempt >= maxRetries) break;
+      await new Promise(r => setTimeout(r, 1000 * (2 ** attempt)));
+      attempt++;
+    }
+  }
+  throw lastErr || new Error('tgCall failed');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SEND QUEUE
+   ═══════════════════════════════════════════════════════════════ */
+function signalKeyOf(s) {
+  return `${s.tf || ''}|${s.t}|${s.type}|${s.dir}`;
+}
+
+const SEND_QUEUE = [];
+let SEND_PROCESSING = false;
+
+function shouldAutoSend(signal) {
+  const o = STATE.strategyAutoSend[signal.type];
+  if (o != null) return o;
+  const cfg = STRATEGY_CONFIG[signal.type];
+  return cfg ? cfg.autoSend : false;
+}
+
+function enqueueSend(signal, feedKey) {
+  if (!STATE.tg.autoEnabled || !STATE.tg.configured) return false;
+
+  const now = Date.now();
+  const since = now - STATE.tg.lastSendAt;
+  if (since < STATE.tg.cooldownSec * 1000) {
+    const w = Math.ceil((STATE.tg.cooldownSec * 1000 - since) / 1000);
+    sigLog(`Cooldown — skip ${(signal.tf || '').toUpperCase()} ${signal.type} (${w}s)`, 'warn');
+    return false;
+  }
+
+  STATE.tg.lastSendAt = now;
+  SEND_QUEUE.push({ signal, feedKey, enqueuedAt: now });
+  sigLog(`Queue +1: ${(signal.tf || '').toUpperCase()} ${signal.type} (q=${SEND_QUEUE.length})`, 'warn');
+  processSendQueue();
+  return true;
+}
+
+async function processSendQueue() {
+  if (SEND_PROCESSING) return;
+  SEND_PROCESSING = true;
+  while (SEND_QUEUE.length) {
+    const item = SEND_QUEUE.shift();
+    try { await sendSignalToTG(item.signal, item.feedKey); }
+    catch (e) { /* logged inside */ }
+    if (SEND_QUEUE.length) await new Promise(r => setTimeout(r, 1100));
+  }
+  SEND_PROCESSING = false;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIGNAL CHART (canvas)
+   ═══════════════════════════════════════════════════════════════ */
+function drawWatermark(ctx, W, H, pt, pb) {
+  ctx.save();
+  ctx.translate(W / 2, (pt + pb) / 2);
+  ctx.rotate(-Math.PI / 12);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 90px ui-monospace,monospace';
+  ctx.fillStyle = 'rgba(255,176,0,0.03)';
+  ctx.fillText("GOD'S", 0, -55);
+  ctx.fillText("EYE", 0, 45);
+  ctx.font = 'bold 84px ui-monospace,monospace';
+  ctx.fillStyle = 'rgba(255,176,0,0.06)';
+  ctx.fillText("GOD'S", 0, -55);
+  ctx.fillText("EYE", 0, 45);
+  ctx.restore();
+}
+
+function drawPriceTag(ctx, x, y, w, price, label, bg, fg) {
+  const h = 30;
+  ctx.fillStyle = bg;
+  ctx.fillRect(x, y - h / 2, w, h);
+  ctx.fillStyle = 'rgba(0,0,0,.4)';
+  ctx.fillRect(x, y - h / 2, 3, h);
+  ctx.fillStyle = 'rgba(0,0,0,.5)';
+  ctx.font = 'bold 8px ui-monospace,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, x + 8, y - 4);
+  ctx.fillStyle = fg;
+  ctx.font = 'bold 13px ui-monospace,monospace';
+  ctx.fillText(price, x + 8, y + 11);
+}
+
+function drawSignalChart(canvas, signal, candles, tf) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  /* Background */
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0d0d0d');
+  bg.addColorStop(.5, '#080808');
+  bg.addColorStop(1, '#050505');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (!signal || !candles || !candles.length) {
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 28px ui-monospace,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText("GOD'S EYE", W / 2, H / 2);
+    return false;
+  }
+
+  const padL = 30, padR = 160, padT = 90, padB = 60;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const plotTop = padT;
+
+  drawWatermark(ctx, W, H, plotTop, padT + plotH);
+
+  /* Header */
+  ctx.fillStyle = '#ffb000';
+  ctx.fillRect(padL, 20, 4, 50);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px ui-monospace,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(DISPLAY_SYMBOL, padL + 16, 45);
+  ctx.fillStyle = '#ffb000';
+  ctx.font = 'bold 14px ui-monospace,monospace';
+  ctx.fillText('◈ ' + tf.toUpperCase() + ' · ' + signal.type, padL + 16, 65);
+
+  const dc = signal.dir === 'long' ? '#00ff88' : '#ff3860';
+  const dt = signal.dir === 'long' ? '▲ LONG' : '▼ SHORT';
+  ctx.fillStyle = dc;
+  ctx.font = 'bold 26px ui-monospace,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(dt, W - padR + 130, 45);
+  ctx.fillStyle = '#666';
+  ctx.font = '11px ui-monospace,monospace';
+  ctx.fillText(
+    new Date(signal.t).toLocaleString('id-ID', { hour12: false }),
+    W - padR + 130,
+    65
+  );
+
+  /* Find signal candle */
+  const viewN = 80;
+  const sigIdx = candles.findIndex(c => c.t === signal.t);
+  if (sigIdx < 0) {
+    ctx.fillStyle = '#140000';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ff3860';
+    ctx.font = 'bold 26px ui-monospace,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠ CANDLE NOT FOUND', W / 2, H / 2);
+    return false;
+  }
+
+  const endIdx = Math.min(candles.length, sigIdx + 16);
+  const startIdx = Math.max(0, endIdx - viewN);
+  const view = candles.slice(startIdx, endIdx);
+
+  let hi = -Infinity, lo = Infinity;
+  for (const c of view) {
+    if (c.h > hi) hi = c.h;
+    if (c.l < lo) lo = c.l;
+  }
+  hi = Math.max(hi, signal.target, signal.entry);
+  lo = Math.min(lo, signal.stop, signal.entry);
+  const span = hi - lo || 1;
+  hi += span * .08;
+  lo -= span * .08;
+
+  const x = i => padL + (i + .5) * (plotW / view.length);
+  const y = v => plotTop + (hi - v) / (hi - lo) * plotH;
+  const cw = Math.max(2, (plotW / view.length) * .68);
+
+  const svi = sigIdx - startIdx;
+  const zsx = padL + svi * (plotW / view.length);
+  const zex = padL + plotW;
+  const zw = zex - zsx;
+
+  const eY = y(signal.entry);
+  const tY = y(signal.target);
+  const slY = y(signal.stop);
+
+  /* TP zone */
+  const tT = Math.min(eY, tY);
+  const tB = Math.max(eY, tY);
+  const tH = tB - tT;
+  if (tH > 2) {
+    const g = ctx.createLinearGradient(zsx, 0, zex, 0);
+    g.addColorStop(0, 'rgba(0,255,136,.04)');
+    g.addColorStop(1, 'rgba(0,255,136,.12)');
+    ctx.fillStyle = g;
+    ctx.fillRect(zsx, tT, zw, tH);
+    ctx.strokeStyle = 'rgba(0,255,136,.35)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(zsx, tT); ctx.lineTo(zex, tT); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(zsx, tB); ctx.lineTo(zex, tB); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* SL zone */
+  const sT = Math.min(eY, slY);
+  const sB = Math.max(eY, slY);
+  const sH = sB - sT;
+  if (sH > 2) {
+    const g = ctx.createLinearGradient(zsx, 0, zex, 0);
+    g.addColorStop(0, 'rgba(255,56,96,.12)');
+    g.addColorStop(1, 'rgba(255,56,96,.04)');
+    ctx.fillStyle = g;
+    ctx.fillRect(zsx, sT, zw, sH);
+    ctx.strokeStyle = 'rgba(255,56,96,.35)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(zsx, sT); ctx.lineTo(zex, sT); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(zsx, sB); ctx.lineTo(zex, sB); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* Candles */
+  for (let i = 0; i < view.length; i++) {
+    const c = view[i], cx = x(i), bull = c.c >= c.o;
+    ctx.strokeStyle = bull ? '#00ff88' : '#ff3860';
+    ctx.fillStyle = bull ? '#00ff88' : '#ff3860';
+    ctx.beginPath(); ctx.moveTo(cx, y(c.h)); ctx.lineTo(cx, y(c.l)); ctx.stroke();
+    const yo = y(c.o), yc = y(c.c);
+    ctx.fillRect(cx - cw / 2, Math.min(yo, yc), cw, Math.max(1, Math.abs(yc - yo)));
+  }
+
+  /* Entry line */
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00d4ff';
+  ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.moveTo(padL, eY); ctx.lineTo(padL + plotW, eY); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  /* Signal marker */
+  if (svi >= 0 && svi < view.length) {
+    const cx = x(svi);
+    const c = view[svi];
+    const mY = signal.dir === 'long' ? y(c.l) + 28 : y(c.h) - 28;
+
+    ctx.strokeStyle = signal.dir === 'long' ? 'rgba(0,255,136,.4)' : 'rgba(255,56,96,.4)';
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath(); ctx.moveTo(cx, padT); ctx.lineTo(cx, padT + plotH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = signal.dir === 'long' ? 'rgba(0,255,136,.12)' : 'rgba(255,56,96,.12)';
+    ctx.beginPath(); ctx.arc(cx, mY, 22, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = dc;
+    ctx.beginPath();
+    if (signal.dir === 'long') {
+      ctx.moveTo(cx, mY - 13);
+      ctx.lineTo(cx - 10, mY + 4);
+      ctx.lineTo(cx + 10, mY + 4);
+    } else {
+      ctx.moveTo(cx, mY + 13);
+      ctx.lineTo(cx - 10, mY - 4);
+      ctx.lineTo(cx + 10, mY - 4);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  /* TP/SL labels */
+  if (tH > 30) {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(0,255,136,.9)';
+    ctx.font = 'bold 11px ui-monospace,monospace';
+    ctx.fillText('◆ TARGET', zsx + 12, tT + 20);
+    ctx.font = 'bold 18px ui-monospace,monospace';
+    ctx.fillText(`+${signal.rewardPct.toFixed(2)}%`, zsx + 12, tT + 42);
+  }
+  if (sH > 30) {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,56,96,.9)';
+    ctx.font = 'bold 11px ui-monospace,monospace';
+    ctx.fillText('◆ STOP LOSS', zsx + 12, sB - 26);
+    ctx.font = 'bold 18px ui-monospace,monospace';
+    ctx.fillText(`−${signal.riskPct.toFixed(2)}%`, zsx + 12, sB - 4);
+  }
+
+  /* Price tags */
+  const axX = W - padR + 8;
+  const axW = padR - 16;
+  drawPriceTag(ctx, axX, tY, axW, fmtP(signal.target), 'TP', '#00ff88', '#000');
+  drawPriceTag(ctx, axX, eY, axW, fmtP(signal.entry), 'ENTRY', '#00d4ff', '#000');
+  drawPriceTag(ctx, axX, slY, axW, fmtP(signal.stop), 'SL', '#ff3860', '#fff');
+
+  /* Footer metrics */
+  const footY = H - 40;
+  ctx.fillStyle = 'rgba(15,15,15,.9)';
+  ctx.fillRect(0, footY - 8, W, 48);
+  ctx.fillStyle = 'rgba(255,176,0,.3)';
+  ctx.fillRect(0, footY - 8, W, 1);
+
+  const metrics = [
+    { k: 'R:R', v: `${signal.rr.toFixed(2)}:1`, c: '#00d4ff' },
+    { k: 'VOL', v: `${signal.volRatio.toFixed(2)}×`, c: '#ffd60a' },
+    { k: 'CONF', v: `${signal.conf}/5`, c: '#ffb000' },
+    { k: 'REGIME', v: signal.regime ? signal.regime.toUpperCase() : '—', c: '#b06aff' },
+    { k: 'ENTRY', v: STATE.entryMode === 'next-open' ? 'N.O.' : 'CLOSE', c: '#00ffff' },
+  ];
+  let cx = padL;
+  ctx.textAlign = 'left';
+  for (const m of metrics) {
+    ctx.fillStyle = '#555';
+    ctx.font = 'bold 9px ui-monospace,monospace';
+    ctx.fillText(m.k, cx, footY + 8);
+    ctx.fillStyle = m.c;
+    ctx.font = 'bold 13px ui-monospace,monospace';
+    ctx.fillText(m.v, cx, footY + 26);
+    cx += 105;
+  }
+
+  ctx.fillStyle = 'rgba(255,176,0,.5)';
+  ctx.font = 'bold 11px ui-monospace,monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText("GOD'S EYE", W - padL, footY + 26);
+
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TELEGRAM MESSAGE FORMAT
+   ═══════════════════════════════════════════════════════════════ */
+function formatSignalMessage(s) {
+  const di = s.dir === 'long' ? '🟢' : '🔴';
+  const dt = s.dir === 'long' ? 'LONG' : 'SHORT';
+  const da = s.dir === 'long' ? '▲' : '▼';
+  const typeFull = {
+    PD: s.pdType === 'PDH' ? 'PDH Sweep' : (s.pdType === 'PDL' ? 'PDL Sweep' : 'PD Sweep'),
+    VWAP: s.crossType === 'reclaim' ? 'VWAP Reclaim' : 'VWAP Reject',
+    BOS: 'Break of Structure',
+    CHoCH: 'Change of Character',
+    SWEEP: 'Liquidity Sweep',
+    OB: 'Order Block Retest',
+    MR: 'Mean-Reversion',
+    RSI: 'RSI Extreme',
+    FVG: 'Fair Value Gap',
+  }[s.type] || s.type;
+
+  const entry = fmtP(s.entry);
+  const stop = fmtP(s.stop);
+  const target = fmtP(s.target);
+  const rP = s.riskPct.toFixed(2);
+  const rwP = s.rewardPct.toFixed(2);
+  const stars = '★'.repeat(s.confStars) + '☆'.repeat(5 - s.confStars);
+  const time = new Date(s.t).toLocaleString('id-ID', {
+    hour12: false,
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const emTag = STATE.entryMode === 'next-open' ? ' · NEXT OPEN' : ' · CLOSE';
+
+  const pb = [
+    `ENTRY    $${entry.padStart(10)}`,
+    `STOP     $${stop.padStart(10)}  −${rP}%`,
+    `TARGET   $${target.padStart(10)}  +${rwP}%`,
+    `R:R      ${s.rr.toFixed(2).padStart(10)} : 1`,
+  ].join('\n');
+
+  return `${di} <b>SIGNAL · ${DISPLAY_SYMBOL}</b>
+━━━━━━━━━━━━━━━━━━━━━
+<b>${typeFull}</b>
+${(s.tf || STATE.tg.tf).toUpperCase()} · ${da} ${dt}${emTag} · ${time}
+
+<pre>${pb}</pre>
+
+📊 <b>Confidence</b>   ${stars}  ${s.conf}/5
+📈 <b>Volume</b>       ${s.volRatio.toFixed(2)}× avg
+📐 <b>Regime</b>       ${s.regime ? s.regime.toUpperCase() : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━
+<i>⚡ GOD'S EYE v4.2</i>
+<i>Bukan financial advice. DYOR.</i>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIGNAL PAGE RENDERING
+   ═══════════════════════════════════════════════════════════════ */
+function renderSigLog() {
+  $('sigLogCount').textContent = $('sigLogList').children.length + ' entries';
+}
+
+function sigLog(msg, type) {
+  const list = $('sigLogList');
+  const now = new Date().toLocaleTimeString('id-ID', { hour12: false });
+  const item = el('div', 'log-item ' + (type || ''),
+    `<span class="log-time">${now}</span><span class="log-msg">${msg}</span>`);
+  if (list.querySelector('.empty')) list.innerHTML = '';
+  list.insertBefore(item, list.firstChild);
+  while (list.children.length > 60) list.removeChild(list.lastChild);
+  renderSigLog();
+}
+
+function renderSigFeed() {
+  const list = $('sigFeedList');
+  if (!STATE.sigFeed.length) {
+    list.innerHTML = '<div class="empty">Belum ada sinyal</div>';
+    $('sigFeedCount').textContent = '0';
+    return;
+  }
+  const mm = getMedalMap();
+  list.innerHTML = STATE.sigFeed.map(s => {
+    const di = s.dir === 'long' ? '▲' : '▼';
+    const dc = s.dir === 'long' ? 'pos' : 'neg';
+    const time = new Date(s.t).toLocaleString('id-ID', {
+      hour12: false, hour: '2-digit', minute: '2-digit',
+    });
+    const stars = '★'.repeat(s.confStars) + '☆'.repeat(5 - s.confStars);
+    const st = s._sendStatus || 'pending';
+    const key = signalKeyOf(s);
+
+    const medal = mm.get(s.type + '|' + (s.tf || ''));
+    const mc = medal ? medal.cls : '';
+    const mi = medal
+      ? `<span class="rank-medal" title="TOP ${medal.rank} · Edge ${medal.edge.toFixed(1)}">${medal.medal}</span>`
+      : '';
+
+    let tl = s.type;
+    if (s.type === 'PD') tl = `PD·${s.pdType || ''}`;
+    else if (s.type === 'VWAP') tl = `VWAP·${s.crossType === 'reclaim' ? 'RC' : 'RJ'}`;
+
+    return `<div class="sig-feed-item ${mc}">
+      <div class="sig-feed-info">
+        <div class="sig-feed-title">
+          ${mi}
+          <span class="sig-feed-type" style="color:${SIG_COLOR[s.type] || '#fff'}">${tl}</span>
+          <span class="sig-feed-tf">${(s.tf || '1h').toUpperCase()}</span>
+          <span class="sig-feed-dir ${dc}">${di} ${s.dir.toUpperCase()}</span>
+        </div>
+        <div class="sig-feed-meta">${time} · $${fmtP(s.entry)} · R:R ${s.rr.toFixed(2)} · ${stars}</div>
+      </div>
+      <button class="sig-send-btn ${st}" data-key="${key}" ${st === 'sent' ? 'disabled' : ''}>
+        ${st === 'sent' ? '✓ SENT' : st === 'fail' ? '↻ RETRY' : 'SEND'}
+      </button>
+    </div>`;
+  }).join('');
+
+  $('sigFeedCount').textContent = STATE.sigFeed.length + ' signals';
+
+  list.querySelectorAll('.sig-send-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const key = btn.dataset.key;
+      const idx = STATE.sigFeed.findIndex(s => signalKeyOf(s) === key);
+      if (idx < 0) { toast('Signal tidak ditemukan'); return; }
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = '⏳ …';
+      await sendSignalToTG(STATE.sigFeed[idx], key);
+      btn.textContent = orig;
+    };
+  });
+}
+
+async function generateSignalPreview() {
+  const btn = $('btnGenerate');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.textContent = '⏳ LOADING…';
+  $('sigPreviewStatus').textContent = 'FETCHING…';
+
+  try {
+    const tf = STATE.tg.tf || STATE.tf;
+    const candles = await fetchCandles(tf, 300);
+    const signals = analyzeTF(candles, tf);
+
+    if (!signals.length) {
+      $('sigPreviewStatus').textContent = 'NO SIGNAL';
+      $('sigCaptionPreview').textContent = `Tidak ada sinyal TF ${tf}.`;
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = '⟳ REGENERATE';
+      return;
+    }
+
+    const latest = signals[signals.length - 1];
+    STATE.previewSignal = { ...latest, tf };
+    const ok = drawSignalChart($('sigCanvas'), latest, candles, tf);
+    if (!ok) $('sigPreviewStatus').textContent = 'CHART ERROR';
+    else $('sigPreviewStatus').textContent = `${signals.length} signals · ${latest.type} ${latest.dir.toUpperCase()}`;
+
+    $('sigCaptionPreview').innerHTML = formatSignalMessage({ ...latest, tf });
+    $('btnSendPreview').disabled = !STATE.tg.configured;
+    sigLog(`Preview: ${tf.toUpperCase()} ${latest.type} ${latest.dir.toUpperCase()}`, 'ok');
+  } catch (e) {
+    $('sigPreviewStatus').textContent = 'ERROR';
+    $('sigCaptionPreview').textContent = 'Error: ' + e.message;
+    sigLog('Generate failed: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  btn.textContent = '⟳ REGENERATE';
+}
+
+async function sendSignalToTG(signal, feedKey) {
+  if (!STATE.tg.configured) { toast('Konfigurasi bot di ⚙', 'warn'); return false; }
+  if (!signal) { toast('Tidak ada signal', 'warn'); return false; }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 675;
+
+  try {
+    const candles = await fetchCandles(signal.tf || STATE.tg.tf, 300);
+    const cok = drawSignalChart(canvas, signal, candles, signal.tf || STATE.tg.tf);
+    if (!cok) {
+      sigLog(`✗ Chart render failed ${signal.type}`, 'err');
+      toast('Chart gagal render', 'warn');
+      if (feedKey) {
+        const idx = STATE.sigFeed.findIndex(s => signalKeyOf(s) === feedKey);
+        if (idx >= 0) { STATE.sigFeed[idx]._sendStatus = 'fail'; renderSigFeed(); }
+      }
+      return false;
+    }
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.94));
+    const fd = new FormData();
+    fd.append('chat_id', STATE.tg.chatId);
+    fd.append('photo', blob, 'signal.png');
+    fd.append('caption', formatSignalMessage(signal));
+    fd.append('parse_mode', 'HTML');
+
+    await tgCall('sendPhoto', fd);
+    STATE.tg.lastSendAt = Date.now();
+    sigLog(`✓ Sent: ${signal.type} ${signal.dir.toUpperCase()} @ $${fmtP(signal.entry)}`, 'ok');
+    toast('Signal terkirim', 'ok');
+
+    if (feedKey) {
+      const idx = STATE.sigFeed.findIndex(s => signalKeyOf(s) === feedKey);
+      if (idx >= 0) { STATE.sigFeed[idx]._sendStatus = 'sent'; renderSigFeed(); }
+    }
+    return true;
+  } catch (e) {
+    sigLog('Send failed: ' + e.message, 'err');
+    toast('Gagal: ' + e.message);
+    if (feedKey) {
+      const idx = STATE.sigFeed.findIndex(s => signalKeyOf(s) === feedKey);
+      if (idx >= 0) { STATE.sigFeed[idx]._sendStatus = 'fail'; renderSigFeed(); }
+    }
+    return false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PUSH TO FEED + AUTO-SEND
+   ═══════════════════════════════════════════════════════════════ */
+function pushSignalToFeed(tf, signal, opts = {}) {
+  const autoSend = opts.autoSend !== false;
+  const sigWithTf = { ...signal, tf, _sendStatus: 'pending' };
+  delete sigWithTf.outcome;
+
+  const key = signalKeyOf(sigWithTf);
+  if (STATE.seenSignalKeysTg.has(key)) return false;
+  STATE.seenSignalKeysTg.add(key);
+
+  STATE.sigFeed.unshift(sigWithTf);
+  if (STATE.sigFeed.length > 30) STATE.sigFeed.pop();
+  if (STATE.page === 'signal') renderSigFeed();
+
+  /* Update preview if on signal page */
+  if (STATE.page === 'signal' && autoSend) {
+    const d = STATE.data[tf];
+    if (d && d.candles && d.candles.length) {
+      STATE.previewSignal = sigWithTf;
+      try {
+        const ok = drawSignalChart($('sigCanvas'), sigWithTf, d.candles, tf);
+        if (ok) {
+          $('sigCaptionPreview').innerHTML = formatSignalMessage(sigWithTf);
+          $('sigPreviewStatus').textContent = `Auto: ${tf.toUpperCase()} ${sigWithTf.type}`;
+          $('btnSendPreview').disabled = !STATE.tg.configured;
+        }
+      } catch (e) { /* silent */ }
+    }
+  }
+
+  /* Auto-send */
+  if (
+    autoSend &&
+    STATE.tg.autoEnabled &&
+    STATE.tg.configured &&
+    signal.conf >= STATE.tg.minConf &&
+    shouldAutoSend(signal)
+  ) {
+    enqueueSend(sigWithTf, key);
+  }
+
+  return true;
+}
+
+async function bootCatchupSignals() {
+  if (!STATE.tg.autoEnabled || !STATE.tg.configured) return;
+
+  const now = Date.now();
+  const cands = [];
+
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d || !d.signals.length) continue;
+    const recent = d.signals.slice(-3);
+    for (const s of recent) {
+      const cT = s.t + TF_MS[tf];
+      const age = now - cT;
+      if (age < 0 || age > CATCHUP_WINDOW_MS) continue;
+      if (s.conf < STATE.tg.minConf) continue;
+      if (!shouldAutoSend(s)) continue;
+      const key = `${tf}|${s.t}|${s.type}|${s.dir}`;
+      if (STATE.seenSignalKeysTg.has(key)) continue;
+      cands.push({ ...s, tf, age });
+    }
+  }
+  if (!cands.length) return;
+
+  cands.sort((a, b) => b.conf - a.conf || a.age - b.age);
+  const top = cands[0];
+
+  for (const c of cands) {
+    STATE.seenSignalKeysTg.add(`${c.tf}|${c.t}|${c.type}|${c.dir}`);
+  }
+
+  const sw = { ...top, _sendStatus: 'pending' };
+  delete sw.age;
+  delete sw.outcome;
+
+  STATE.sigFeed.unshift(sw);
+  if (STATE.sigFeed.length > 30) STATE.sigFeed.pop();
+  renderSigFeed();
+
+  STATE.tg.lastSendAt = Date.now();
+  const key = signalKeyOf(sw);
+  SEND_QUEUE.push({ signal: sw, feedKey: key, enqueuedAt: Date.now() });
+  processSendQueue();
+}
+
+async function tgPollNewSignals() {
+  try {
+    const tf = STATE.tg.tf;
+    const candles = await fetchCandles(tf, 300);
+    const signals = analyzeTF(candles, tf);
+    const fresh = signals.filter(s => s.idx >= candles.length - 5);
+
+    for (const s of fresh) {
+      const key = `${tf}|${s.t}|${s.type}|${s.dir}`;
+      if (STATE.seenSignalKeysTg.has(key)) continue;
+      STATE.seenSignalKeysTg.add(key);
+
+      const sw = { ...s, tf, _sendStatus: 'pending' };
+      delete sw.outcome;
+      STATE.sigFeed.unshift(sw);
+      if (STATE.sigFeed.length > 30) STATE.sigFeed.pop();
+      if (STATE.page === 'signal') renderSigFeed();
+
+      if (STATE.tg.autoEnabled && s.conf >= STATE.tg.minConf && shouldAutoSend(s)) {
+        enqueueSend(sw, key);
+      }
+    }
+  } catch (e) { /* silent */ }
+}
+
+function startTgPolling() {
+  stopTgPolling();
+  if (STATE.tg.autoEnabled) {
+    STATE.tgPollTimer = setInterval(tgPollNewSignals, STATE.tg.pollSec * 1000);
+  }
+}
+function stopTgPolling() {
+  if (STATE.tgPollTimer) { clearInterval(STATE.tgPollTimer); STATE.tgPollTimer = null; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESET APPLY
+   ═══════════════════════════════════════════════════════════════ */
+function applyPreset(presetKey) {
+  if (presetKey === 'custom') {
+    STATE.preset = 'custom';
+    toast('Preset: CUSTOM · manual', 'ok');
+    saveCfg();
+    return;
+  }
+  const p = PRESET_MODES[presetKey];
+  if (!p) return;
+
+  STATE.preset = presetKey;
+
+  if (p.whitelist) {
+    STATE.strategyAutoSend = {};
+    for (const [type, enabled] of Object.entries(p.whitelist)) {
+      STATE.strategyAutoSend[type] = enabled;
+    }
+  }
+  if (p.minN != null) {
+    STATE.scanner.minN = p.minN;
+    const sl = $('fMinN');
+    if (sl) {
+      sl.value = p.minN;
+      $('fMinNVal').textContent = p.minN;
+    }
+  }
+
+  saveCfg();
+  toast(`${p.icon} ${p.name} applied`, 'ok');
+  renderScanner();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS MODAL
+   ═══════════════════════════════════════════════════════════════ */
+function activeFilterCount() {
+  return [
+    STATE.weekendFilter,
+    STATE.killZoneFilter,
+    STATE.pdSweepEnabled,
+    STATE.vwapEnabled,
+    STATE.regimeFilter,
+  ].filter(Boolean).length;
+}
+
+function openSettings() {
+  const body = $('settingsBody');
+
+  /* Build strategy toggle HTML */
+  const stratTogglesHtml = SCANNER_TYPES.map(type => {
+    const cfg = STRATEGY_CONFIG[type];
+    const enabled = STATE.strategyAutoSend[type] != null
+      ? STATE.strategyAutoSend[type]
+      : cfg.autoSend;
+    const rrByTF = cfg.targetRRByTF
+      ? Object.entries(cfg.targetRRByTF).map(([tf, rr]) => `${tf}:${rr}R`).join(' ')
+      : null;
+
+    return `<div class="strat-toggle">
+      <div>
+        <div class="name" style="color:${cfg.color}">${type}</div>
+        <div class="hint">${rrByTF || `RR ${cfg.targetRR}`}</div>
+      </div>
+      <div class="toggle sm ${enabled ? 'on' : ''}" data-strat="${type}"></div>
+    </div>`;
+  }).join('');
+
+  /* Build preset buttons */
+  const presetBtnsHtml = Object.entries(PRESET_MODES).map(([k, p]) => {
+    const isOn = STATE.preset === k;
+    const cls = k === 'conservative' ? 'conservative' : (k === 'aggressive' ? 'aggressive' : '');
+    return `<div class="preset-btn ${isOn ? 'on ' + cls : ''}" data-preset="${k}">
+      <div class="icon">${p.icon}</div>
+      <div class="name">${p.name}</div>
+      <div class="desc">${p.desc}</div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="modal-hdr">
+      <div>
+        <div class="type">⚙ SETTINGS v4.2</div>
+        <div class="sub">Preset · Telegram · Filters · Entry</div>
+      </div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Preset Mode</span>
+        <span class="badge ok">${PRESET_MODES[STATE.preset].name}</span>
+      </div>
+      <div style="font-size:9.5px;color:var(--sub);margin-bottom:8px;line-height:1.5">
+        Preset auto-config whitelist auto-send & min N. Custom = manual.
+      </div>
+      <div class="preset-grid" id="presetGrid">${presetBtnsHtml}</div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Telegram Bot</span>
+        <span class="badge ${STATE.tg.configured ? 'ok' : 'err'}" id="setTgBadge">
+          ${STATE.tg.configured ? '✓ ' + (STATE.tg.chatId || '').slice(-8) : 'not config'}
+        </span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Bot Token</div>
+        <input type="password" class="settings-input" id="setToken" value="${STATE.tg.token || ''}">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Chat ID</div>
+        <input type="text" class="settings-input" id="setChatId" value="${STATE.tg.chatId || ''}">
+      </div>
+      <div class="settings-btn-row">
+        <button class="btn btn-primary" id="setSaveTg">SIMPAN</button>
+        <button class="btn btn-ghost" id="setTestTg">TEST BOT</button>
+      </div>
+      <div class="settings-status ${STATE.tg.configured ? 'ok' : ''}" id="setTgStatus">
+        ${STATE.tg.configured ? '✓ Bot aktif' : 'Belum dikonfigurasi'}
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Auto-Send</span>
+        <span class="badge ${STATE.tg.autoEnabled ? 'ok' : ''}" id="setAutoBadge">
+          ${STATE.tg.autoEnabled ? 'ON' : 'OFF'}
+        </span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Auto-Send</div>
+        <div class="toggle ${STATE.tg.autoEnabled ? 'on' : ''}" id="setToggleAuto"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Min Conf</div>
+        <input type="number" class="settings-input" id="setMinConf" min="1" max="5"
+               value="${STATE.tg.minConf}" style="width:70px">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Cooldown (s)</div>
+        <input type="number" class="settings-input" id="setCooldown" min="30" max="3600"
+               value="${STATE.tg.cooldownSec}" style="width:70px">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Poll (s)</div>
+        <input type="number" class="settings-input" id="setPoll" min="30" max="600"
+               value="${STATE.tg.pollSec}" style="width:70px">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">TG TF</div>
+        <select class="settings-input" id="setTgTF" style="width:70px">
+          <option value="5m" ${STATE.tg.tf === '5m' ? 'selected' : ''}>5m</option>
+          <option value="15m" ${STATE.tg.tf === '15m' ? 'selected' : ''}>15m</option>
+          <option value="30m" ${STATE.tg.tf === '30m' ? 'selected' : ''}>30m</option>
+          <option value="1h" ${STATE.tg.tf === '1h' ? 'selected' : ''}>1h</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Whitelist Auto-Send</span>
+        <span class="badge">per strategi</span>
+      </div>
+      <div style="font-size:9.5px;color:var(--sub);margin-bottom:8px;line-height:1.5">
+        Hanya strategi ON yang dikirim ke Telegram. RR/TF shown di bawah nama.
+      </div>
+      <div class="strat-grid" id="stratGrid">${stratTogglesHtml}</div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Entry Timing</span>
+        <span class="badge ${STATE.entryMode === 'next-open' ? 'ok' : ''}" id="setEntryBadge">
+          ${STATE.entryMode === 'next-open' ? 'NEXT OPEN' : 'CLOSE'}
+        </span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Mode</div>
+        <div class="seg">
+          <div class="chip ${STATE.entryMode === 'close' ? 'on' : ''}" id="setEntryClose">CLOSE</div>
+          <div class="chip ${STATE.entryMode === 'next-open' ? 'on' : ''}" id="setEntryOpen"
+               style="${STATE.entryMode === 'next-open' ? 'background:var(--green);color:#000' : ''}">
+            NEXT OPEN
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">
+        <span>◆ Filters</span>
+        <span class="badge" id="setFilterBadge">${activeFilterCount()} / 5</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Weekend<span class="hint">Exclude weekend UTC</span></div>
+        <div class="toggle ${STATE.weekendFilter ? 'on' : ''}" id="setToggleWknd"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Kill-Zone<span class="hint">London + NY only</span></div>
+        <div class="toggle cyan ${STATE.killZoneFilter ? 'on' : ''}" id="setToggleKZ"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">ADX Regime<span class="hint">${STATE.regimeTilt ? 'TILT mode' : 'BLOCK mode'}</span></div>
+        <div class="toggle ${STATE.regimeFilter ? 'on' : ''}" id="setToggleRegime"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">PDH/PDL</div>
+        <div class="toggle pink ${STATE.pdSweepEnabled ? 'on' : ''}" id="setTogglePD"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">VWAP</div>
+        <div class="toggle vwap ${STATE.vwapEnabled ? 'on' : ''}" id="setToggleVWAP"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title"><span>◆ v4.2 Features</span></div>
+      <div style="font-size:10px;color:var(--sub);line-height:1.65">
+        ✅ Preset modes (Conservative/Balanced/Aggressive)<br>
+        ✅ TF-specific TargetRR<br>
+        ✅ Edge Score = PF × √N × WR/50<br>
+        ✅ Edge badge (💎 GEM / 🔥 STRONG / ✅ OK / ⚠️ WEAK)<br>
+        ✅ Sort default by Edge<br>
+        ✅ Regime TILT mode<br>
+        ✅ Same-bar conservative loss<br>
+        ✅ Breakeven stop 1.5R<br>
+        ✅ MTF window ≤ 3× LTF<br>
+        ✅ OB volume check 1.15×
+      </div>
+    </div>
+  `;
+
+  /* ─── Wire presets ─── */
+  $('presetGrid').querySelectorAll('.preset-btn').forEach(b => {
+    b.onclick = () => {
+      applyPreset(b.dataset.preset);
+      openSettings();
+    };
+  });
+
+  /* ─── Wire Telegram ─── */
+  $('setSaveTg').onclick = () => {
+    STATE.tg.token = $('setToken').value.trim();
+    STATE.tg.chatId = $('setChatId').value.trim();
+    STATE.tg.configured = !!(STATE.tg.token && STATE.tg.chatId);
+    saveCfg();
+    updateTgStatusUI();
+    $('setTgBadge').className = 'badge ' + (STATE.tg.configured ? 'ok' : 'err');
+    $('setTgBadge').textContent = STATE.tg.configured
+      ? '✓ ' + STATE.tg.chatId.slice(-8)
+      : 'not config';
+    $('setTgStatus').className = 'settings-status ' + (STATE.tg.configured ? 'ok' : '');
+    $('setTgStatus').textContent = STATE.tg.configured ? '✓ Bot aktif' : 'Belum dikonfigurasi';
+    toast(STATE.tg.configured ? 'Tersimpan' : 'Isi token & chat ID', STATE.tg.configured ? 'ok' : 'warn');
+    startTgPolling();
+  };
+
+  $('setTestTg').onclick = async () => {
+    const btn = $('setTestTg');
+    const prev = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ TESTING…';
+    try {
+      STATE.tg.token = $('setToken').value.trim();
+      STATE.tg.chatId = $('setChatId').value.trim();
+      if (!STATE.tg.token || !STATE.tg.chatId) throw new Error('Token/Chat kosong');
+      const me = await tgCall('getMe', {});
+      await tgCall('sendMessage', {
+        chat_id: STATE.tg.chatId,
+        text: `✅ <b>GOD'S EYE v4.2 Connected</b>\nBot: @${me.username}`,
+        parse_mode: 'HTML',
+      });
+      STATE.tg.configured = true;
+      saveCfg();
+      updateTgStatusUI();
+      $('setTgStatus').className = 'settings-status ok';
+      $('setTgStatus').textContent = `✓ Bot OK: @${me.username}`;
+      toast('Bot OK + test message', 'ok');
+    } catch (e) {
+      $('setTgStatus').className = 'settings-status err';
+      $('setTgStatus').textContent = '✗ ' + e.message;
+      toast('Gagal: ' + e.message);
+    }
+    btn.disabled = false;
+    btn.textContent = prev;
+  };
+
+  /* ─── Wire auto-send ─── */
+  $('setToggleAuto').onclick = () => {
+    STATE.tg.autoEnabled = !STATE.tg.autoEnabled;
+    $('setToggleAuto').classList.toggle('on', STATE.tg.autoEnabled);
+    $('setAutoBadge').className = 'badge ' + (STATE.tg.autoEnabled ? 'ok' : '');
+    $('setAutoBadge').textContent = STATE.tg.autoEnabled ? 'ON' : 'OFF';
+    saveCfg();
+    startTgPolling();
+    updateTgStatusUI();
+  };
+  $('setMinConf').oninput = () => {
+    STATE.tg.minConf = Math.max(1, Math.min(5, +$('setMinConf').value || 4));
+    saveCfg();
+  };
+  $('setCooldown').oninput = () => {
+    STATE.tg.cooldownSec = Math.max(30, +$('setCooldown').value || 300);
+    saveCfg();
+  };
+  $('setPoll').oninput = () => {
+    STATE.tg.pollSec = Math.max(30, +$('setPoll').value || 60);
+    saveCfg();
+    startTgPolling();
+  };
+  $('setTgTF').onchange = () => {
+    STATE.tg.tf = $('setTgTF').value;
+    saveCfg();
+    startTgPolling();
+  };
+
+  /* ─── Wire strategy whitelist ─── */
+  $('stratGrid').querySelectorAll('.toggle[data-strat]').forEach(tg => {
+    tg.onclick = () => {
+      const strat = tg.dataset.strat;
+      const cur = STATE.strategyAutoSend[strat] != null
+        ? STATE.strategyAutoSend[strat]
+        : STRATEGY_CONFIG[strat].autoSend;
+      STATE.strategyAutoSend[strat] = !cur;
+      tg.classList.toggle('on', !cur);
+
+      /* Switch to custom preset */
+      if (STATE.preset !== 'custom') {
+        STATE.preset = 'custom';
+        const badge = document.querySelector('.settings-section-title .badge.ok');
+        if (badge) badge.textContent = 'CUSTOM';
+      }
+      saveCfg();
+      toast(`${strat} auto-send ${!cur ? 'ON' : 'OFF'}`, 'ok');
+    };
+  });
+
+  /* ─── Wire entry mode ─── */
+  $('setEntryClose').onclick = () => {
+    if (STATE.entryMode === 'close') return;
+    STATE.entryMode = 'close';
+    $('setEntryClose').classList.add('on');
+    $('setEntryOpen').classList.remove('on');
+    $('setEntryOpen').style.background = '';
+    $('setEntryOpen').style.color = '';
+    $('setEntryBadge').className = 'badge';
+    $('setEntryBadge').textContent = 'CLOSE';
+    saveCfg();
+    reanalyzeAll();
+    renderAll();
+    if (STATE.page === 'scanner') renderScanner();
+    toast('Entry: CLOSE', 'ok');
+  };
+  $('setEntryOpen').onclick = () => {
+    if (STATE.entryMode === 'next-open') return;
+    STATE.entryMode = 'next-open';
+    $('setEntryOpen').classList.add('on');
+    $('setEntryOpen').style.background = 'var(--green)';
+    $('setEntryOpen').style.color = '#000';
+    $('setEntryClose').classList.remove('on');
+    $('setEntryBadge').className = 'badge ok';
+    $('setEntryBadge').textContent = 'NEXT OPEN';
+    saveCfg();
+    reanalyzeAll();
+    renderAll();
+    if (STATE.page === 'scanner') renderScanner();
+    toast('Entry: NEXT OPEN', 'ok');
+  };
+
+  /* ─── Wire filters ─── */
+  const refreshFB = () => {
+    const b = $('setFilterBadge');
+    if (b) b.textContent = activeFilterCount() + ' / 5';
+  };
+  const reanalyze = () => {
+    reanalyzeAll();
+    renderAll();
+    if (STATE.page === 'scanner') renderScanner();
+    refreshFB();
+  };
+
+  $('setToggleWknd').onclick = () => {
+    STATE.weekendFilter = !STATE.weekendFilter;
+    $('setToggleWknd').classList.toggle('on', STATE.weekendFilter);
+    saveCfg();
+    reanalyze();
+  };
+  $('setToggleKZ').onclick = () => {
+    STATE.killZoneFilter = !STATE.killZoneFilter;
+    $('setToggleKZ').classList.toggle('on', STATE.killZoneFilter);
+    saveCfg();
+    reanalyze();
+  };
+  $('setToggleRegime').onclick = () => {
+    STATE.regimeFilter = !STATE.regimeFilter;
+    $('setToggleRegime').classList.toggle('on', STATE.regimeFilter);
+    saveCfg();
+    reanalyze();
+  };
+  $('setTogglePD').onclick = () => {
+    STATE.pdSweepEnabled = !STATE.pdSweepEnabled;
+    $('setTogglePD').classList.toggle('on', STATE.pdSweepEnabled);
+    saveCfg();
+    reanalyze();
+  };
+  $('setToggleVWAP').onclick = () => {
+    STATE.vwapEnabled = !STATE.vwapEnabled;
+    $('setToggleVWAP').classList.toggle('on', STATE.vwapEnabled);
+    saveCfg();
+    reanalyze();
+  };
+
+  $('settingsModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  body.scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIG PERSIST
+   ═══════════════════════════════════════════════════════════════ */
+function loadCfg() {
+  try {
+    const raw = localStorage.getItem(CFG_KEY);
+    if (raw) {
+      const c = JSON.parse(raw);
+      if (c.token) STATE.tg.token = c.token;
+      if (c.chatId) STATE.tg.chatId = c.chatId;
+      if (typeof c.autoEnabled === 'boolean') STATE.tg.autoEnabled = c.autoEnabled;
+      if (c.minConf) STATE.tg.minConf = c.minConf;
+      if (c.cooldownSec) STATE.tg.cooldownSec = c.cooldownSec;
+      if (c.pollSec) STATE.tg.pollSec = c.pollSec;
+      if (c.tf) STATE.tg.tf = c.tf;
+      if (typeof c.weekendFilter === 'boolean') STATE.weekendFilter = c.weekendFilter;
+      if (typeof c.killZoneFilter === 'boolean') STATE.killZoneFilter = c.killZoneFilter;
+      if (typeof c.pdSweepEnabled === 'boolean') STATE.pdSweepEnabled = c.pdSweepEnabled;
+      if (typeof c.vwapEnabled === 'boolean') STATE.vwapEnabled = c.vwapEnabled;
+      if (typeof c.regimeFilter === 'boolean') STATE.regimeFilter = c.regimeFilter;
+      if (c.entryMode) STATE.entryMode = c.entryMode;
+      if (c.strategyAutoSend) STATE.strategyAutoSend = c.strategyAutoSend;
+      if (c.preset) STATE.preset = c.preset;
+      if (c.scannerMinN) STATE.scanner.minN = c.scannerMinN;
+    }
+    STATE.tg.configured = !!(STATE.tg.token && STATE.tg.chatId);
+  } catch (e) {}
+}
+
+function saveCfg() {
+  try {
+    localStorage.setItem(CFG_KEY, JSON.stringify({
+      ...STATE.tg,
+      weekendFilter: STATE.weekendFilter,
+      killZoneFilter: STATE.killZoneFilter,
+      pdSweepEnabled: STATE.pdSweepEnabled,
+      vwapEnabled: STATE.vwapEnabled,
+      regimeFilter: STATE.regimeFilter,
+      entryMode: STATE.entryMode,
+      strategyAutoSend: STATE.strategyAutoSend,
+      preset: STATE.preset,
+      scannerMinN: STATE.scanner.minN,
+    }));
+  } catch (e) {}
+}
+
+function updateTgStatusUI() {
+  $('btnSendPreview').disabled = !STATE.previewSignal || !STATE.tg.configured;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TERMINAL RENDERING
+   ═══════════════════════════════════════════════════════════════ */
+function renderExpBar() {
+  const bar = $('expBar');
+  bar.innerHTML = '';
+  for (const [key, m] of Object.entries(EXPERIMENTS)) {
+    const b = el('div', 'chip' + (STATE.mode === key ? ' on' : ''), m.label);
+    b.onclick = () => switchMode(key);
+    bar.appendChild(b);
+  }
+  const preset = PRESET_MODES[STATE.preset];
+  $('expInfo').innerHTML =
+    `<b style="color:var(--amber)">${EXPERIMENTS[STATE.mode].label}</b>` +
+    ` · ${EXPERIMENTS[STATE.mode].desc}` +
+    ` · <b>${preset.icon} ${preset.name}</b>` +
+    ` · entry <b style="color:var(--cyan)">${STATE.entryMode === 'next-open' ? 'NEXT OPEN' : 'CLOSE'}</b>`;
+}
+
+function switchMode(key) {
+  if (STATE.mode === key) return;
+  STATE.mode = key;
+  renderExpBar();
+  toast(`Mode: ${EXPERIMENTS[key].label}`, 'ok');
+  reanalyzeAll();
+  renderAll();
+  if (STATE.testOpen) runFalsificationTest();
+  if (STATE.page === 'scanner') renderScanner();
+}
+
+function renderTabs() {
+  const box = $('tfs');
+  box.innerHTML = '';
+  for (const tf of TF_LIST) {
+    const b = el('div', 'tf' + (tf === STATE.tf ? ' on' : ''), tf);
+    const d = STATE.data[tf];
+    if (d && d.signals.length) {
+      const last = d.signals[d.signals.length - 1];
+      const age = d.candles.length - 1 - last.idx;
+      if (age <= 12) b.appendChild(el('span', 'sig-dot ' + last.dir));
+    }
+    b.onclick = () => { STATE.tf = tf; renderAll(); };
+    box.appendChild(b);
+  }
+}
+
+function renderMTF() {
+  const g = $('mtfGrid');
+  g.innerHTML = '';
+  const order = [...TF_LIST].reverse();
+  for (const tf of order) {
+    const d = STATE.data[tf];
+    const cell = el('div', 'mtf-cell');
+    let val = '—';
+    let sig = '—';
+    let cls = '';
+    const isClosed = STATE.weekendFilter && !isTradingTime(Date.now());
+    if (isClosed) cls = 'closed';
+
+    if (d && d.candles.length) {
+      val = fmtP(d.candles[d.candles.length - 1].c);
+      if (d.signals.length) {
+        const s = d.signals[d.signals.length - 1];
+        const age = d.candles.length - 1 - s.idx;
+        if (age <= 15) {
+          sig = s.type + ' ' + (s.dir === 'long' ? '▲' : '▼');
+          cls = s.dir + (isClosed ? ' closed' : '');
+          if (s.htfAligned && s.htfAligned.length && !isClosed) cls += ' conf';
+        } else sig = 'idle';
+      }
+    }
+    if (isClosed) sig = 'CLOSED';
+    cell.className = 'mtf-cell ' + cls;
+    cell.innerHTML =
+      `<div class="lbl">${tf.toUpperCase()}</div>` +
+      `<div class="val">${val}</div>` +
+      `<div class="sig">${sig}</div>`;
+    cell.onclick = () => { STATE.tf = tf; renderAll(); };
+    g.appendChild(cell);
+  }
+  $('mtfTime').textContent = new Date().toLocaleTimeString('id-ID', { hour12: false });
+}
+
+function groupSignalsByBar() {
+  const all = [];
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d) continue;
+    const byBar = new Map();
+    for (const s of d.signals) {
+      const k = s.idx;
+      if (!byBar.has(k)) byBar.set(k, []);
+      byBar.get(k).push({ ...s, tf });
+    }
+    for (const [idx, sigs] of byBar) {
+      sigs.sort((a, b) => PRIORITY[a.type] - PRIORITY[b.type]);
+      all.push({ tf, idx, signals: sigs, t: sigs[0].t });
+    }
+  }
+  return all;
+}
+
+function applyFilter(bar) {
+  const f = STATE.filter;
+  if (f.tf !== 'all' && bar.tf !== f.tf) return false;
+  bar.signals = bar.signals.filter(s => {
+    if (f.dir !== 'all' && s.dir !== f.dir) return false;
+    if (f.type !== 'all' && s.type !== f.type) return false;
+    return true;
+  });
+  return bar.signals.length > 0;
+}
+
+function renderSignals() {
+  const tb = $('sigBody');
+  let bars = groupSignalsByBar().filter(applyFilter);
+  bars.sort((a, b) => b.t - a.t);
+  const show = bars.slice(0, 30);
+  const mm = getMedalMap();
+  STATE.signalMap.clear();
+
+  if (!show.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="empty">Tidak ada signal</td></tr>';
+    $('sigCount').textContent = '0';
+    return;
+  }
+
+  tb.innerHTML = show.map(bar => {
+    const dom = bar.signals[0];
+    const sid = STATE.nextSid++;
+    STATE.signalMap.set(sid, bar);
+
+    const barCloseT = bar.t + TF_MS[bar.tf];
+    const isRecent = Date.now() - barCloseT < TF_MS[bar.tf] * 5;
+    const time = new Date(barCloseT).toLocaleTimeString('id-ID', {
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const htfBig = bar.tf === '30m' || bar.tf === '1h';
+    const stars = '★'.repeat(dom.confStars) +
+      '<span class="off">' + '★'.repeat(Math.max(0, 5 - dom.confStars)) + '</span>';
+    const typeColor = SIG_COLOR[dom.type];
+    const multi = bar.signals.length > 1
+      ? `<span class="multi-badge">+${bar.signals.length - 1}</span>`
+      : '';
+
+    const oc = dom.outcome && dom.outcome.status !== 'open' ? dom.outcome.status : 'open';
+    const outcomeDot = `<span class="outcome-dot ${oc}"></span>`;
+
+    const medal = mm.get(dom.type + '|' + bar.tf);
+    const mc = medal ? medal.cls : '';
+    const mi = medal
+      ? `<span class="rank-medal" title="TOP ${medal.rank} · Edge ${medal.edge.toFixed(1)}">${medal.medal}</span>`
+      : '';
+
+    let tl = dom.type;
+    if (dom.type === 'PD') tl = `${dom.type}·${dom.pdType || ''}`;
+    else if (dom.type === 'VWAP') tl = `VWAP·${dom.crossType === 'reclaim' ? 'RC' : 'RJ'}`;
+
+    return `<tr class="${isRecent ? 'hi' : ''} ${mc}" data-sid="${sid}">
+      <td class="time-cell">${mi}${outcomeDot}${time}</td>
+      <td><span class="tf-tag ${htfBig ? 'big' : ''}">${bar.tf}</span></td>
+      <td><span class="type-tag" style="color:${typeColor}">${tl}</span>${multi}</td>
+      <td class="dir-${dom.dir}">${dom.dir === 'long' ? '▲ L' : '▼ S'}</td>
+      <td class="price-cell">${fmtP(dom.entry)}</td>
+      <td class="rr-cell">${dom.rr.toFixed(1)}<small>:1</small></td>
+      <td><span class="stars">${stars}</span></td>
+    </tr>`;
+  }).join('');
+
+  $('sigCount').textContent = show.length + ' bar';
+}
+
+let rafPending = false;
+function scheduleChart() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => {
+    rafPending = false;
+    renderChart();
+  });
+}
+
+function renderChart() {
+  const cv = $('chart');
+  const wrap = cv.parentNode;
+  if (!cv || !wrap || wrap.clientWidth === 0) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = wrap.clientWidth;
+  const cssH = 320;
+  cv.style.width = cssW + 'px';
+  cv.style.height = cssH + 'px';
+  cv.width = cssW * dpr;
+  cv.height = cssH * dpr;
+
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  const d = STATE.data[STATE.tf];
+  if (!d || !d.candles.length) return;
+
+  const all = d.candles;
+  const view = all.slice(-CHART_VIEW);
+  const startIdx = all.length - view.length;
+
+  const padL = 4, padR = 56, padT = 30, padB = 20;
+  const totalH = cssH - padT - padB;
+  const volH = totalH * 0.18;
+  const gapH = totalH * 0.05;
+  const plotH = totalH - volH - gapH;
+  const plotW = cssW - padL - padR;
+
+  let hi = -Infinity, lo = Infinity, maxVol = 0;
+  for (const c of view) {
+    if (c.h > hi) hi = c.h;
+    if (c.l < lo) lo = c.l;
+    if (c.v > maxVol) maxVol = c.v;
+  }
+  const span = hi - lo || 1;
+  hi += span * 0.05;
+  lo -= span * 0.05;
+
+  const x = i => padL + (i + 0.5) * (plotW / view.length);
+  const y = v => padT + (hi - v) / (hi - lo) * plotH;
+  const yVol = v => padT + plotH + gapH + (1 - v / (maxVol || 1)) * volH;
+  const cw = Math.max(1.5, (plotW / view.length) * 0.72);
+
+  /* Weekend/killzone background */
+  if (STATE.weekendFilter || STATE.killZoneFilter) {
+    for (let i = 0; i < view.length; i++) {
+      const c = view[i];
+      const wkOff = STATE.weekendFilter && !isTradingTime(c.t);
+      const kzOff = STATE.killZoneFilter && !isKillZone(c.t);
+      if (wkOff) {
+        ctx.fillStyle = 'rgba(255,56,96,.05)';
+        ctx.fillRect(x(i) - cw / 2 - 0.5, padT, cw + 1, plotH);
+      } else if (kzOff) {
+        ctx.fillStyle = 'rgba(0,212,255,.035)';
+        ctx.fillRect(x(i) - cw / 2 - 0.5, padT, cw + 1, plotH);
+      }
+    }
+  }
+
+  /* Watermark */
+  ctx.save();
+  ctx.translate(cssW / 2, padT + plotH / 2);
+  ctx.rotate(-Math.PI / 14);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 28px ui-monospace,monospace';
+  ctx.fillStyle = 'rgba(255,176,0,.04)';
+  ctx.fillText("GOD'S EYE", 0, 0);
+  ctx.restore();
+
+  /* Grid + labels */
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const yy = padT + (plotH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padL, yy);
+    ctx.lineTo(cssW - padR, yy);
+    ctx.stroke();
+    const pv = hi - (hi - lo) * (i / 4);
+    ctx.fillStyle = '#666';
+    ctx.font = '9px ui-monospace,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(fmtP(pv), cssW - padR + 5, yy + 3);
+  }
+
+  /* Volume bars */
+  for (let i = 0; i < view.length; i++) {
+    const c = view[i];
+    const cx = x(i);
+    const bull = c.c >= c.o;
+    ctx.fillStyle = bull ? 'rgba(0,255,136,.3)' : 'rgba(255,56,96,.3)';
+    const y0 = yVol(c.v);
+    const y1 = padT + plotH + gapH + volH;
+    ctx.fillRect(cx - cw / 2, y0, cw, y1 - y0);
+  }
+
+  /* Candles */
+  for (let i = 0; i < view.length; i++) {
+    const c = view[i];
+    const cx = x(i);
+    const bull = c.c >= c.o;
+    const col = bull ? '#00ff88' : '#ff3860';
+    ctx.strokeStyle = col;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(cx, y(c.h));
+    ctx.lineTo(cx, y(c.l));
+    ctx.stroke();
+    const yo = y(c.o);
+    const yc = y(c.c);
+    ctx.fillRect(cx - cw / 2, Math.min(yo, yc), cw, Math.max(1, Math.abs(yc - yo)));
+  }
+
+  /* Signal markers */
+  for (const s of d.signals) {
+    if (s.idx < startIdx) continue;
+    const i = s.idx - startIdx;
+    if (i < 0 || i >= view.length) continue;
+    const cx = x(i);
+    const c = view[i];
+    const long = s.dir === 'long';
+    const yy = long ? y(c.l) + 9 : y(c.h) - 9;
+    ctx.fillStyle = SIG_COLOR[s.type];
+    ctx.beginPath();
+    if (long) {
+      ctx.moveTo(cx, yy - 6);
+      ctx.lineTo(cx - 5, yy + 2);
+      ctx.lineTo(cx + 5, yy + 2);
+    } else {
+      ctx.moveTo(cx, yy + 6);
+      ctx.lineTo(cx - 5, yy - 2);
+      ctx.lineTo(cx + 5, yy - 2);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    if (s.htfAligned && s.htfAligned.length) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, yy, 8, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  /* Last price line */
+  const last = view[view.length - 1];
+  const ly = y(last.c);
+  const lc = last.c >= last.o ? '#00ff88' : '#ff3860';
+  ctx.strokeStyle = lc;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(padL, ly);
+  ctx.lineTo(cssW - padR, ly);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = lc;
+  ctx.fillRect(cssW - padR + 2, ly - 7, padR - 4, 14);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 9px ui-monospace,monospace';
+  ctx.fillText(fmtP(last.c), cssW - padR + 6, ly + 3);
+
+  $('chartInfo').innerHTML = `TF <b>${STATE.tf}</b> · ${view.length}c`;
+}
+
+function renderPerf() {
+  const all = allSignalsFlat();
+  const gross = STATE.perfMode === 'gross';
+  const overall = aggregateStats(all, gross);
+
+  $('perfLine').innerHTML =
+    `${gross ? 'GROSS' : 'NET'} · WR <b>${overall.wr.toFixed(1)}%</b> · N=<b>${overall.closed}</b>`;
+
+  const panel = $('perfPanel');
+  if (STATE.perfCollapsed) {
+    panel.classList.add('collapsed');
+    return;
+  }
+  panel.classList.remove('collapsed');
+
+  const eB = edgeBadge(overall.edge);
+
+  const summaryHtml = `
+    <div class="perf-summary">
+      <div class="ps"><b class="${overall.wr >= 55 ? 'pos' : overall.wr > 0 ? '' : 'neg'}">${overall.wr.toFixed(1)}%</b><small>Winrate</small></div>
+      <div class="ps"><b>${overall.closed}</b><small>Closed</small></div>
+      <div class="ps"><b class="${overall.pf > 1 ? 'pos' : 'neg'}">${overall.pf === Infinity ? '∞' : overall.pf.toFixed(2)}</b><small>PF</small></div>
+      <div class="ps"><b class="${overall.exp > 0 ? 'pos' : 'neg'}">${overall.exp > 0 ? '+' : ''}${overall.exp.toFixed(3)}%</b><small>Exp</small></div>
+    </div>
+    <div style="display:flex;gap:8px;padding:6px 12px;font-size:9px;color:var(--sub);border-bottom:1px solid var(--line2);background:#0d0d0d;justify-content:center;align-items:center">
+      <span class="edge-badge ${eB.cls}">${eB.icon} Edge ${overall.edge.toFixed(1)}</span>
+      <span>✓ <b class="pos">${overall.wins}</b></span>
+      <span>✗ <b class="neg">${overall.losses}</b></span>
+      <span>◆ <b style="color:var(--grey)">${overall.breakevens}</b></span>
+      <span>⏱ <b class="warn">${overall.expired}</b></span>
+    </div>`;
+
+  const modeHtml = `
+    <div class="perf-mode">
+      <div class="pmode ${gross ? '' : 'on'}" onclick="setPerfMode('net')">NET</div>
+      <div class="pmode ${gross ? 'on' : ''}" onclick="setPerfMode('gross')">GROSS</div>
+    </div>`;
+
+  const tab = STATE.perfTab;
+  let rows = [];
+  if (tab === 'type') {
+    rows = groupStats(all, s => s.type, gross).sort((a, b) => PRIORITY[a.key] - PRIORITY[b.key]);
+  } else if (tab === 'conf') {
+    const order = ['C5', 'C4', 'C3', 'C2', 'C1'];
+    rows = groupStats(all, s => 'C' + s.confStars, gross)
+      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  } else if (tab === 'tf') {
+    rows = groupStats(all, s => s.tf, gross)
+      .sort((a, b) => TF_LIST.indexOf(a.key) - TF_LIST.indexOf(b.key));
+  } else if (tab === 'dir') {
+    rows = groupStats(all, s => s.dir, gross).sort((a, b) => a.key.localeCompare(b.key));
+  }
+
+  const rowsHtml = rows.map(r => {
+    const st = r.stats;
+    const wrCls = st.closed === 0 ? 'wr-na'
+      : st.wr >= 60 ? 'wr-hi'
+      : st.wr >= 50 ? 'wr-mid' : 'wr-lo';
+    const expCls = st.exp > 0 ? 'pos' : st.exp < 0 ? 'neg' : '';
+    const keyColor = tab === 'type' ? SIG_COLOR[r.key] : 'var(--txt)';
+    return `<tr>
+      <td><span style="color:${keyColor};font-weight:700">${r.key}</span></td>
+      <td class="num">${st.closed}<span style="color:var(--dim)">/${st.total}</span></td>
+      <td class="num"><span class="wr-badge ${wrCls}">${st.closed > 0 ? st.wr.toFixed(1) + '%' : '—'}</span></td>
+      <td class="num ${expCls}">${st.closed > 0 ? `${st.exp > 0 ? '+' : ''}${st.exp.toFixed(3)}%` : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const totalRow = `<tr class="total">
+    <td>ALL</td>
+    <td class="num">${overall.closed}<span style="color:var(--dim)">/${overall.total}</span></td>
+    <td class="num"><span class="wr-badge ${overall.wr >= 60 ? 'wr-hi' : overall.wr >= 50 ? 'wr-mid' : 'wr-lo'}">${overall.wr.toFixed(1)}%</span></td>
+    <td class="num ${overall.exp > 0 ? 'pos' : 'neg'}">${overall.exp > 0 ? '+' : ''}${overall.exp.toFixed(3)}%</td>
+  </tr>`;
+
+  const tabsHtml = `
+    <div class="perf-tabs">
+      <div class="perf-tab ${tab === 'type' ? 'on' : ''}" onclick="setPerfTab('type')">Type</div>
+      <div class="perf-tab ${tab === 'conf' ? 'on' : ''}" onclick="setPerfTab('conf')">Conf</div>
+      <div class="perf-tab ${tab === 'tf' ? 'on' : ''}" onclick="setPerfTab('tf')">TF</div>
+      <div class="perf-tab ${tab === 'dir' ? 'on' : ''}" onclick="setPerfTab('dir')">Dir</div>
+    </div>`;
+
+  panel.innerHTML = summaryHtml + modeHtml + tabsHtml + `
+    <table class="perf-tbl">
+      <thead>
+        <tr><th>Key</th><th class="num">N</th><th class="num">WR</th><th class="num">Exp</th></tr>
+      </thead>
+      <tbody>${rowsHtml}${totalRow}</tbody>
+    </table>`;
+}
+
+function setPerfTab(t) { STATE.perfTab = t; renderPerf(); }
+function setPerfMode(m) { STATE.perfMode = m; renderPerf(); }
+
+function togglePerf() {
+  STATE.perfCollapsed = !STATE.perfCollapsed;
+  $('perfChev').style.transform = STATE.perfCollapsed ? 'rotate(-90deg)' : '';
+  renderPerf();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCANNER RENDERING
+   ═══════════════════════════════════════════════════════════════ */
+function renderScanner() {
+  renderRankingList();
+  renderMatrix();
+}
+
+function applyScannerFilter(items) {
+  const f = STATE.scanner;
+  return items.filter(it => it.n >= f.minN && it.wr >= f.minWR && it.exp >= f.minExp);
+}
+
+function sortScanner(items) {
+  const f = STATE.scanner;
+  const dir = f.sortDir === 'desc' ? -1 : 1;
+  return items.slice().sort((a, b) => {
+    const av = a[f.sortKey];
+    const bv = b[f.sortKey];
+    if (av === bv) return b.n - a.n;
+    return (av - bv) * dir;
+  });
+}
+
+function wrGrade(wr, n) {
+  if (n < 5) return 'g0';
+  if (wr >= 55) return 'g5';
+  if (wr >= 45) return 'g4';
+  if (wr >= 38) return 'g3';
+  if (wr >= 33) return 'g2';
+  if (wr >= 28) return 'g1';
+  return 'g0';
+}
+
+function renderRankingList() {
+  const box = $('rankList');
+  const all = buildRanking();
+  const filtered = sortScanner(applyScannerFilter(all));
+  $('rankCount').textContent = `${filtered.length} / ${all.length}`;
+
+  if (!filtered.length) {
+    box.innerHTML = '<div class="rank-empty">Tidak ada kombinasi lolos filter.</div>';
+    return;
+  }
+
+  const show = filtered.slice(0, 30);
+  box.innerHTML = show.map((it, i) => {
+    const wrCls = it.wr >= 60 ? 'wr-hi' : it.wr >= 45 ? 'wr-mid' : 'wr-lo';
+    const expCls = it.exp > 0 ? 'pos' : 'neg';
+    const isBigTF = it.tf === '30m' || it.tf === '1h';
+    const rankCls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    const eB = edgeBadge(it.edge);
+
+    return `<div class="rank-item ${rankCls}" data-type="${it.type}" data-tf="${it.tf}">
+      <div class="rank-num">#${i + 1}</div>
+      <div class="rank-mid">
+        <div class="rank-title">
+          <span class="rank-strat" style="color:${SIG_COLOR[it.type]}">${it.type}</span>
+          <span class="rank-tf ${isBigTF ? 'big' : 'sm'}">${it.tf.toUpperCase()}</span>
+          <span class="edge-badge ${eB.cls}">${eB.icon} ${it.edge.toFixed(1)}</span>
+        </div>
+        <div class="rank-metrics">
+          <span>N=<b>${it.n}</b></span>
+          <span>Exp <b class="${expCls}">${it.exp > 0 ? '+' : ''}${it.exp.toFixed(3)}%</b></span>
+          <span>PF <b>${it.pf === 999 ? '∞' : it.pf.toFixed(2)}</b></span>
+        </div>
+      </div>
+      <div class="rank-right">
+        <div class="rank-wr"><span class="wr-badge ${wrCls}">${it.wr.toFixed(1)}%</span></div>
+        <div class="rank-sub">${it.stats.wins}/${it.stats.wins + it.stats.losses} W/L</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('.rank-item').forEach(e => {
+    e.onclick = () => openScannerModal(e.dataset.type, e.dataset.tf);
+  });
+}
+
+function renderMatrix() {
+  const tbl = $('matrixTbl');
+  const matrix = buildMatrix();
+  const f = STATE.scanner;
+
+  let html = '<thead><tr><th>Setup</th>';
+  for (const tf of TF_LIST) html += `<th>${tf.toUpperCase()}</th>`;
+  html += '</tr></thead><tbody>';
+
+  for (const type of SCANNER_TYPES) {
+    html += `<tr data-type="${type}"><td>${type}</td>`;
+    for (const tf of TF_LIST) {
+      const st = matrix[type] && matrix[type][tf];
+      if (!st || st.closed === 0) {
+        html += `<td><div class="mx-cell empty">—</div></td>`;
+      } else {
+        const grade = wrGrade(st.wr, st.closed);
+        const pass = st.closed >= f.minN && st.wr >= f.minWR && st.exp >= f.minExp;
+        html += `<td data-type="${type}" data-tf="${tf}"><div class="mx-cell ${grade}" style="${pass ? '' : 'opacity:.35'}"><div class="mx-wr">${st.wr.toFixed(0)}%</div><div class="mx-n">N=${st.closed}</div></div></td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody>';
+
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('td[data-type][data-tf]').forEach(e => {
+    e.onclick = () => openScannerModal(e.dataset.type, e.dataset.tf);
+  });
+}
+
+function openScannerModal(type, tf) {
+  const d = STATE.data[tf];
+  if (!d) return;
+  const sigs = d.signals.filter(s => s.type === type);
+  const stats = aggregateStats(sigs, false);
+  const typeColor = SIG_COLOR[type];
+  const trades = sigs.slice().sort((a, b) => b.t - a.t).slice(0, 100);
+  const eB = edgeBadge(stats.edge);
+
+  const tradesHtml = trades.length ? trades.map(s => {
+    const pnl = computePnL(s, false);
+    const time = new Date(s.t).toLocaleString('id-ID', {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const outcome = s.outcome && s.outcome.status !== 'open' ? s.outcome.status : 'open';
+    const icon = outcome === 'win' ? '✓'
+      : outcome === 'loss' ? '✗'
+      : outcome === 'expired' ? '⏱'
+      : outcome === 'breakeven' ? '◆' : '○';
+    const pnlCls = pnl ? (pnl.netPct > 0.001 ? 'pos' : pnl.netPct < -0.001 ? 'neg' : '') : '';
+    const pnlStr = pnl ? `${pnl.netPct > 0 ? '+' : ''}${pnl.netPct.toFixed(3)}%` : '—';
+
+    let sub = '';
+    if (s.type === 'PD') sub = ` <span style="color:var(--pink);font-size:9px">${s.pdType || ''}</span>`;
+    else if (s.type === 'VWAP') sub = ` <span style="color:var(--vwap);font-size:9px">${s.crossType === 'reclaim' ? 'RC' : 'RJ'}</span>`;
+
+    return `<div style="padding:8px 16px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px;font-size:11px">
+      <span style="color:var(--sub);font-size:10px;min-width:70px">${time}</span>
+      <span class="dir-${s.dir}" style="font-weight:700;min-width:20px">${s.dir === 'long' ? '▲' : '▼'}</span>
+      <span style="font-variant-numeric:tabular-nums;min-width:60px">${fmtP(s.entry)}${sub}</span>
+      <span style="color:${outcome === 'win' ? 'var(--green)' : outcome === 'loss' ? 'var(--red)' : outcome === 'expired' ? 'var(--yellow)' : outcome === 'breakeven' ? 'var(--grey)' : 'var(--dim)'}">${icon}</span>
+      <span class="${pnlCls}" style="margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700">${pnlStr}</span>
+    </div>`;
+  }).join('') : '<div class="empty">Tidak ada trade</div>';
+
+  $('modalBody').innerHTML = `
+    <div class="modal-hdr">
+      <div>
+        <div class="type" style="color:${typeColor}">${type} · ${tf.toUpperCase()}</div>
+        <div class="sub">${sigs.length} sinyal · ${stats.closed} closed · ${stats.open} open · entry ${STATE.entryMode === 'next-open' ? 'NEXT OPEN' : 'CLOSE'}</div>
+      </div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--line2)">
+      <div class="perf-summary" style="border-bottom:0;margin:-14px -16px 0;padding:0">
+        <div class="ps"><b class="${stats.wr >= 55 ? 'pos' : 'neg'}">${stats.wr.toFixed(1)}%</b><small>Winrate</small></div>
+        <div class="ps"><b>${stats.closed}</b><small>Closed</small></div>
+        <div class="ps"><b class="${stats.pf > 1 ? 'pos' : 'neg'}">${stats.pf === Infinity ? '∞' : stats.pf.toFixed(2)}</b><small>PF</small></div>
+        <div class="ps"><b class="${stats.exp > 0 ? 'pos' : 'neg'}">${stats.exp > 0 ? '+' : ''}${stats.exp.toFixed(3)}%</b><small>Exp</small></div>
+      </div>
+      <div style="font-size:10px;color:var(--sub);margin-top:8px;text-align:center">
+        <span class="edge-badge ${eB.cls}">${eB.icon} Edge ${stats.edge.toFixed(1)}</span>
+        <span style="margin-left:8px">
+          <span class="pos">${stats.wins}W</span> ·
+          <span class="neg">${stats.losses}L</span> ·
+          <span style="color:var(--grey)">${stats.breakevens}BE</span> ·
+          <span class="warn">${stats.expired}Exp</span>
+        </span>
+      </div>
+    </div>
+    <div style="padding:8px 16px;font-size:10px;color:var(--amber);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">Trade History</div>
+    ${tradesHtml}
+  `;
+
+  $('modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  $('modalBody').scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FALSIFICATION
+   ═══════════════════════════════════════════════════════════════ */
+function seededRandom(seed) {
+  let s = seed | 0;
+  return function () {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+function shuffleCandles(candles, seed) {
+  const rng = seededRandom(seed);
+  const fields = candles.map(c => ({ o: c.o, h: c.h, l: c.l, c: c.c, v: c.v }));
+  for (let i = fields.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [fields[i], fields[j]] = [fields[j], fields[i]];
+  }
+  return candles.map((orig, i) => ({
+    t: orig.t,
+    o: fields[i].o,
+    h: fields[i].h,
+    l: fields[i].l,
+    c: fields[i].c,
+    v: fields[i].v,
+  }));
+}
+
+function runShuffleTest() {
+  const allSigs = [];
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d || !d.candles.length) continue;
+
+    const shuffled = shuffleCandles(d.candles, 42);
+    const mode = EXPERIMENTS[STATE.mode];
+    const rsiArr = IND.rsi(shuffled, 14);
+    const atrArr = IND.atr(shuffled, 14);
+    const adxArr = IND.adx(shuffled, ADX_PERIOD);
+    const ctx = { atr: atrArr, rsiArr, mode, entryMode: STATE.entryMode, adxArr, tf };
+
+    const smc = analyzeSMC(shuffled, 3, 3);
+    const fvgSigs = detectFVG(shuffled);
+    const mrSigs = detectBBMR(shuffled, rsiArr);
+    const rsiSigs = detectRSIExtreme(shuffled, rsiArr);
+    const pdSigs = STATE.pdSweepEnabled ? detectPDSweep(shuffled) : [];
+    const vwapSigs = STATE.vwapEnabled ? detectVWAP(shuffled) : [];
+    const all = [...smc.events, ...fvgSigs, ...mrSigs, ...rsiSigs, ...pdSigs, ...vwapSigs];
+
+    for (const s of all) s.t = shuffled[s.idx].t;
+
+    const enriched = all.map(s => {
+      const e = enrichSignal(s, shuffled, ctx);
+      if (e._skip) return e;
+      e.outcome = evaluateSignal(e, shuffled, tf);
+      e.tf = tf;
+      return e;
+    });
+
+    const seen = new Set();
+    let dd = [];
+    for (const s of enriched) {
+      if (s._skip) continue;
+      const key = `${s.idx}|${s.type}|${s.dir}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      dd.push(s);
+    }
+
+    if (STATE.weekendFilter) dd = dd.filter(s => isTradingTime(shuffled[s.idx].t));
+    if (STATE.killZoneFilter) dd = dd.filter(s => isKillZone(shuffled[s.idx].t));
+    allSigs.push(...dd);
+  }
+  return allSigs;
+}
+
+function runReverseTest() {
+  const allSigs = [];
+  for (const tf of TF_LIST) {
+    const d = STATE.data[tf];
+    if (!d) continue;
+    for (const s of d.signals) {
+      const rev = { ...s };
+      rev.dir = s.dir === 'long' ? 'short' : 'long';
+      const rD = Math.abs(s.stop - s.entry);
+      const rwD = Math.abs(s.target - s.entry);
+      rev.stop = rev.dir === 'long' ? s.entry - rD : s.entry + rD;
+      rev.target = rev.dir === 'long' ? s.entry + rwD : s.entry - rwD;
+      rev.outcome = evaluateSignal(rev, d.candles, tf);
+      rev.tf = tf;
+      allSigs.push(rev);
+    }
+  }
+  return allSigs;
+}
+
+function interpretTest(o, sh, rv) {
+  const dOS = o.wr - sh.wr;
+  const dOR = o.wr - rv.wr;
+  if (Math.abs(dOS) < 3 && Math.abs(dOR) < 3) {
+    return { type: 'fail', title: 'FAIL · NO EDGE', text: `Orig ${o.wr.toFixed(1)}% ≈ Shuf ${sh.wr.toFixed(1)}% ≈ Rev ${rv.wr.toFixed(1)}%` };
+  }
+  if (dOS > 5 && dOR > 5) {
+    return { type: 'pass', title: 'PASS · EDGE DETECTED', text: `Orig ${o.wr.toFixed(1)}% > Shuf ${sh.wr.toFixed(1)}% & Rev ${rv.wr.toFixed(1)}%` };
+  }
+  if (dOR < -10) {
+    return { type: 'anti', title: 'ANTI-EDGE', text: `Reverse lebih baik ${rv.wr.toFixed(1)}% vs Orig ${o.wr.toFixed(1)}%` };
+  }
+  return { type: 'mixed', title: 'MIXED · PARTIAL EDGE', text: 'Perbedaan tidak konsisten.' };
+}
+
+function runFalsificationTest() {
+  if (STATE.testRunning) return;
+  STATE.testRunning = true;
+
+  const panel = $('testPanel');
+  panel.classList.add('collapsed');
+
+  setTimeout(() => {
+    panel.classList.remove('collapsed');
+    panel.innerHTML = '<div class="test-running">⏳ Running shuffle…</div>';
+
+    setTimeout(() => {
+      try {
+        const orig = aggregateStats(allSignalsFlat(), false);
+        const shuf = aggregateStats(runShuffleTest(), false);
+        const rev = aggregateStats(runReverseTest(), false);
+        STATE.testResults = { orig, shuf, rev };
+        renderTestPanel();
+        $('testLine').innerHTML = `Δ shuf <b>${(orig.wr - shuf.wr).toFixed(1)}pp</b> · Δ rev <b>${(orig.wr - rev.wr).toFixed(1)}pp</b>`;
+      } catch (e) {
+        panel.innerHTML = `<div style="padding:12px;color:var(--red)">Error: ${e.message}</div>`;
+      }
+      STATE.testRunning = false;
+    }, 40);
+  }, 40);
+}
+
+function renderTestPanel() {
+  const panel = $('testPanel');
+  if (!STATE.testOpen) { panel.classList.add('collapsed'); return; }
+  panel.classList.remove('collapsed');
+  if (!STATE.testResults) {
+    panel.innerHTML = '<div class="test-running">Klik header.</div>';
+    return;
+  }
+
+  const { orig, shuf, rev } = STATE.testResults;
+
+  const mkD = (a, b) => {
+    const d = a - b;
+    const c = Math.abs(d) < 3 ? 'neu' : d > 0 ? 'pos' : 'neg';
+    return `<span class="delta ${c}">${d > 0 ? '+' : ''}${d.toFixed(1)}pp</span>`;
+  };
+  const mkR = (l, c, s, dh) => `<tr class="${c}">
+    <td><span class="test-lbl ${c}">${l}</span>${dh || ''}</td>
+    <td class="num">${s.closed}</td>
+    <td class="num"><span class="wr-badge ${s.wr >= 45 ? 'wr-hi' : s.wr >= 35 ? 'wr-mid' : 'wr-lo'}">${s.wr.toFixed(1)}%</span></td>
+    <td class="num ${s.exp > 0 ? 'pos' : 'neg'}">${s.exp > 0 ? '+' : ''}${s.exp.toFixed(3)}%</td>
+  </tr>`;
+
+  const v = interpretTest(orig, shuf, rev);
+
+  panel.innerHTML = `
+    <div style="padding:12px">
+      <table class="test-tbl">
+        <thead>
+          <tr><th>Test</th><th class="num">N</th><th class="num">WR</th><th class="num">Exp</th></tr>
+        </thead>
+        <tbody>
+          ${mkR('ORIGINAL', 'orig', orig, '')}
+          ${mkR('SHUFFLED', 'shuf', shuf, mkD(orig.wr, shuf.wr))}
+          ${mkR('REVERSED', 'rev', rev, mkD(orig.wr, rev.wr))}
+        </tbody>
+      </table>
+      <div class="test-verdict ${v.type}"><b>${v.title}</b>${v.text}</div>
+    </div>`;
+}
+
+function toggleTest() {
+  STATE.testOpen = !STATE.testOpen;
+  $('testChev').style.transform = STATE.testOpen ? 'rotate(90deg)' : '';
+  if (STATE.testOpen && !STATE.testResults) runFalsificationTest();
+  else renderTestPanel();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ALERTS + HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+function detectAndAlert(tf, signals) {
+  const newOnes = [];
+  const barGroups = new Map();
+
+  for (const s of signals) {
+    const k = `${tf}|${s.idx}|${s.type}|${s.dir}`;
+    if (STATE.seenSignalKeys.has(k)) continue;
+    STATE.seenSignalKeys.add(k);
+
+    const isFresh = (s.t + TF_MS[tf]) > Date.now() - TF_MS[tf] * 2;
+    if (!isFresh) continue;
+
+    if (s.conf >= 4 && STATE.alertEnabled) newOnes.push(s);
+
+    if (!barGroups.has(s.idx)) barGroups.set(s.idx, []);
+    barGroups.get(s.idx).push(s);
+  }
+
+  for (const [barIdx, group] of barGroups) {
+    group.sort((a, b) => b.conf - a.conf);
+    const top = group[0];
+    for (const s of group) pushSignalToFeed(tf, s, { autoSend: s === top });
+
+    const medal = getMedalMap().get(top.type + '|' + tf);
+    if (medal) {
+      const mKey = `${tf}|${top.t}|${top.type}|${top.dir}|m${medal.rank}`;
+      if (!STATE.medalSoundPlayed.has(mKey)) {
+        STATE.medalSoundPlayed.add(mKey);
+        playMedalSound(medal.rank);
+        toast(`${medal.medal} TOP ${medal.rank} · ${top.type} ${tf.toUpperCase()} · Edge ${medal.edge.toFixed(1)}`, 'ok');
+      }
+    }
+  }
+  if (STATE.medalSoundPlayed && STATE.medalSoundPlayed.size > 300) {
+    STATE.medalSoundPlayed = new Set([...STATE.medalSoundPlayed].slice(-200));
+  }
+
+  newOnes.forEach(fireAlert);
+  if (STATE.seenSignalKeys.size > 500) {
+    STATE.seenSignalKeys = new Set([...STATE.seenSignalKeys].slice(-300));
+  }
+}
+
+function fireAlert(s) {
+  const dT = s.dir === 'long' ? '▲ LONG' : '▼ SHORT';
+  toast(`⚡ ${s.tf ? s.tf.toUpperCase() : ''} ${s.type} ${dT}`, 'ok');
+  if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+  beep(s.dir === 'long' ? 880 : 440, 0.12);
+}
+
+function beep(freq, dur) {
+  try {
+    if (!STATE.audioCtx) {
+      STATE.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = STATE.audioCtx;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.connect(g);
+    g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.08, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start();
+    osc.stop(ctx.currentTime + dur);
+  } catch (_) {}
+}
+
+function setLive(on, txt) {
+  const l = $('live');
+  l.classList.remove('off', 'warn', 'rest');
+  if (!on) {
+    l.classList.add('off');
+    if (/RECONNECT|CONNECT|LOADING|PROBING|BOOT/.test(txt)) {
+      l.classList.remove('off');
+      l.classList.add('warn');
+    }
+  } else if (/REST/.test(txt)) {
+    l.classList.add('rest');
+  }
+  $('liveTxt').textContent = txt;
+}
+
+let toastT;
+function toast(msg, type) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.className = '', 2400);
+}
+
+function flashPrice(newPx, prevPx) {
+  const pxEl = $('px');
+  pxEl.textContent = fmtP(newPx);
+  if (prevPx != null && newPx !== prevPx) {
+    const cls = newPx > prevPx ? 'flash-up' : 'flash-dn';
+    pxEl.classList.remove('flash-up', 'flash-dn');
+    void pxEl.offsetWidth;
+    pxEl.classList.add(cls);
+    clearTimeout(STATE.flashTimers.px);
+    STATE.flashTimers.px = setTimeout(() => pxEl.classList.remove(cls), 300);
+  }
+  STATE.lastPrice = newPx;
+}
+
+function updateMTFCell(tf, px, prevPx) {
+  const cells = $('mtfGrid').querySelectorAll('.mtf-cell');
+  const idx = TF_LIST.slice().reverse().indexOf(tf);
+  if (idx < 0 || !cells[idx]) return;
+  const val = cells[idx].querySelector('.val');
+  if (val) {
+    val.textContent = fmtP(px);
+    if (prevPx != null && px !== prevPx) {
+      const cls = px > prevPx ? 'flash-up' : 'flash-dn';
+      val.classList.remove('flash-up', 'flash-dn');
+      void val.offsetWidth;
+      val.classList.add(cls);
+      setTimeout(() => val.classList.remove(cls), 300);
+    }
+  }
+}
+
+function renderChips() {
+  const box = $('chips');
+  box.innerHTML = '';
+  const f = STATE.filter;
+  const mk = (label, key, val) => {
+    const c = el('div', 'chip' + (f[key] === val ? ' on' : ''), label);
+    c.onclick = () => { f[key] = val; renderChips(); renderSignals(); };
+    box.appendChild(c);
+  };
+  const sep = () => box.appendChild(el('div', 'chip group', '·'));
+
+  mk('All TF', 'tf', 'all');
+  for (const tf of TF_LIST) mk(tf, 'tf', tf);
+  sep();
+  mk('All', 'dir', 'all');
+  mk('▲ L', 'dir', 'long');
+  mk('▼ S', 'dir', 'short');
+  sep();
+  mk('All', 'type', 'all');
+  for (const t of SCANNER_TYPES) mk(t, 'type', t);
+}
+
+function tickCountdown() {
+  const tf = STATE.tf;
+  const ms = TF_MS[tf];
+  const now = Date.now();
+  const rem = Math.ceil(now / ms) * ms - now;
+  const s = Math.floor(rem / 1000);
+  const mm = String(Math.floor(s / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  $('cd').innerHTML = `${tf} <b>${mm}:${ss}</b>`;
+}
+
+function renderAll() {
+  renderTabs();
+  renderMTF();
+  renderChart();
+  renderSignals();
+  renderPerf();
+  if (STATE.testOpen) renderTestPanel();
+  if (STATE.page === 'scanner') renderScanner();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVENT WIRING
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) {
+    document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+    document.body.style.overflow = '';
+    return;
+  }
+  const row = e.target.closest('tr[data-sid]');
+  if (row) {
+    const bar = STATE.signalMap.get(+row.dataset.sid);
+    if (bar) openBarModal(bar);
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+    document.body.style.overflow = '';
+  }
+});
+
+$('pageTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.page-tab');
+  if (tab) switchPage(tab.dataset.page);
+});
+
+document.querySelectorAll('[data-toggle]').forEach(h => {
+  h.onclick = () => {
+    const t = $(h.dataset.toggle);
+    if (!t) return;
+    const c = t.classList.toggle('collapsed');
+    const ch = h.querySelector('.chev');
+    if (ch) ch.style.transform = c ? '' : 'rotate(90deg)';
+  };
+});
+
+$('btnSettings').onclick = openSettings;
+
+$('live').onclick = () => {
+  if (STATE.source === 'ws') startRestPolling();
+  else {
+    if (STATE.ws) try { STATE.ws.close(); } catch (_) {}
+    stopRestPolling();
+    connectWS();
+  }
+};
+
+$('btnGenerate').onclick = generateSignalPreview;
+
+$('btnSendPreview').onclick = async () => {
+  if (!STATE.previewSignal) { toast('Generate dulu', 'warn'); return; }
+  const btn = $('btnSendPreview');
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = '⏳ SENDING…';
+  await sendSignalToTG(STATE.previewSignal, null);
+  btn.disabled = false;
+  btn.textContent = prev;
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   BAR MODAL (multi-signal per bar)
+   ═══════════════════════════════════════════════════════════════ */
+function openBarModal(bar) {
+  const bars = bar.signals;
+  const barOpenT = new Date(bar.t).toLocaleString('id-ID', { hour12: false });
+
+  const tabsHtml = bars.map((s, i) => {
+    let l = s.type;
+    if (s.type === 'PD') l = `PD·${s.pdType || ''}`;
+    else if (s.type === 'VWAP') l = `VWAP·${s.crossType === 'reclaim' ? 'RC' : 'RJ'}`;
+    return `<div class="bar-tab ${i === 0 ? 'on' : ''}" data-i="${i}">${l}<span class="dir dir-${s.dir}">${s.dir === 'long' ? '▲' : '▼'}</span></div>`;
+  }).join('');
+
+  $('modalBody').innerHTML = `
+    <div class="modal-hdr">
+      <div>
+        <div class="type">Bar Analysis · ${bar.tf.toUpperCase()}</div>
+        <div class="sub">Bar #${bar.idx} · open ${barOpenT}</div>
+      </div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    ${bars.length > 1 ? `<div class="bar-tabs" id="barTabs">${tabsHtml}</div>` : ''}
+    <div id="sigCards">${bars.map((s, i) => renderSignalCard(s, i)).join('')}</div>
+  `;
+
+  $('modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  $('modalBody').scrollTop = 0;
+
+  if (bars.length > 1) {
+    $('barTabs').addEventListener('click', e => {
+      const t = e.target.closest('.bar-tab');
+      if (!t) return;
+      const idx = +t.dataset.i;
+      document.querySelectorAll('.bar-tab').forEach(x => x.classList.remove('on'));
+      t.classList.add('on');
+      document.querySelectorAll('.sig-card').forEach((c, j) => {
+        c.classList.toggle('dimmed', j !== idx);
+      });
+      document.querySelectorAll('.sig-card')[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
+
+function renderSignalCard(s, idx) {
+  const dc = s.dir === 'long' ? 'var(--green)' : 'var(--red)';
+  const di = s.dir === 'long' ? '▲ LONG' : '▼ SHORT';
+  const typeColor = SIG_COLOR[s.type];
+
+  let tl = s.type;
+  if (s.type === 'PD') tl = `${s.type} · ${s.pdType || ''}`;
+  else if (s.type === 'VWAP') tl = `VWAP · ${s.crossType === 'reclaim' ? 'RECLAIM' : 'REJECT'}`;
+
+  const rP = s.riskPct.toFixed(2);
+  const rwP = s.rewardPct.toFixed(2);
+  const sF = '★'.repeat(s.confStars);
+  const sE = '☆'.repeat(Math.max(0, 5 - s.confStars));
+
+  const htfSec = (s.htfAligned && s.htfAligned.length)
+    ? s.htfAligned.map(a => `<div style="display:flex;justify-content:space-between;padding:6px;background:#0a0a0a;border-radius:4px"><span style="font-size:10px;color:var(--sub)">${a.tf.toUpperCase()}</span><span style="font-size:11px;font-weight:700;color:${a.sig.dir === 'long' ? 'var(--green)' : 'var(--red)'}">${a.sig.type}</span></div>`).join('')
+    : `<div style="grid-column:1/-1;padding:6px;color:var(--sub);font-size:10px">—</div>`;
+
+  let outcomeHtml = '';
+  if (s.outcome) {
+    const pnl = computePnL(s, false);
+    if (s.outcome.status === 'open') {
+      outcomeHtml = `<div class="outcome-bar open"><span class="icon">○</span><span class="txt">Still open</span></div>`;
+    } else {
+      const cls = s.outcome.status;
+      const icon = cls === 'win' ? '✓' : cls === 'loss' ? '✗' : cls === 'breakeven' ? '◆' : '⏱';
+      const label = cls === 'win' ? 'WIN' : cls === 'loss' ? 'LOSS' : cls === 'breakeven' ? 'BREAKEVEN' : 'EXPIRED';
+      const col = cls === 'win' ? 'var(--green)' : cls === 'loss' ? 'var(--red)' : cls === 'breakeven' ? 'var(--grey)' : 'var(--yellow)';
+      const pnlCls = pnl.netPct > 0.001 ? 'pos' : pnl.netPct < -0.001 ? 'neg' : '';
+      outcomeHtml = `<div class="outcome-bar ${cls}">
+        <span class="icon" style="color:${col}">${icon}</span>
+        <span class="txt"><b>${label}</b> · ${pnl.barsHeld} bar · exit ${fmtP(s.outcome.exitPrice)}${s.outcome.note ? ' (' + s.outcome.note + ')' : ''}</span>
+        <span class="num ${pnlCls}">${pnl.netPct > 0 ? '+' : ''}${pnl.netPct.toFixed(3)}%</span>
+      </div>`;
+    }
+  }
+
+  return `<div class="sig-card ${idx === 0 ? '' : 'dimmed'}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div>
+        <span style="font-size:14px;font-weight:700;color:${typeColor};letter-spacing:1px">${tl}</span>
+        <span style="margin-left:8px;font-size:10px;color:var(--sub)">${SIG_FULL[s.type]}</span>
+      </div>
+      <span style="color:${dc};font-weight:700;font-size:11px">${di}</span>
+    </div>
+    ${outcomeHtml}
+    <div class="price-grid" style="margin-top:14px">
+      <div class="pcell entry"><div class="plbl">Entry${STATE.entryMode === 'next-open' ? ' (N.O.)' : ''}</div><div class="pval">${fmtP(s.entry)}</div></div>
+      <div class="pcell stop"><div class="plbl">Stop</div><div class="pval">${fmtP(s.stop)}</div></div>
+      <div class="pcell target"><div class="plbl">Target</div><div class="pval">${fmtP(s.target)}</div></div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="m-title"><span>Confidence</span><span>${sF}${sE} ${s.conf}/5</span></div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="m-title">Context</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="display:flex;justify-content:space-between;padding:6px;background:#0a0a0a;border-radius:4px"><span style="font-size:10px;color:var(--sub)">Risk %</span><span style="font-size:11px;font-weight:700">${rP}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px;background:#0a0a0a;border-radius:4px"><span style="font-size:10px;color:var(--sub)">Reward %</span><span style="font-size:11px;font-weight:700">${rwP}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px;background:#0a0a0a;border-radius:4px"><span style="font-size:10px;color:var(--sub)">Volume</span><span style="font-size:11px;font-weight:700">${s.volRatio.toFixed(2)}×</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px;background:#0a0a0a;border-radius:4px"><span style="font-size:10px;color:var(--sub)">Regime</span><span style="font-size:11px;font-weight:700">${s.regime ? s.regime.toUpperCase() : '—'}</span></div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="m-title">HTF Alignment</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${htfSec}</div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCANNER CONTROLS
+   ═══════════════════════════════════════════════════════════════ */
+function initScannerControls() {
+  const f = STATE.scanner;
+  const bind = (id, vid, key, fmt) => {
+    const sl = $(id);
+    const v = $(vid);
+    sl.value = key === 'minExp' ? Math.round(f[key] * 100) : f[key];
+    v.textContent = fmt(sl.value);
+    sl.oninput = () => {
+      const val = +sl.value;
+      f[key] = key === 'minExp' ? val / 100 : val;
+      v.textContent = fmt(val);
+      renderScanner();
+    };
+  };
+  bind('fMinN', 'fMinNVal', 'minN', v => v);
+  bind('fMinWR', 'fMinWRVal', 'minWR', v => v + '%');
+  bind('fMinExp', 'fMinExpVal', 'minExp', v => (v / 100).toFixed(2) + '%');
+
+  document.querySelectorAll('#fSort .sb').forEach(b => {
+    b.onclick = () => {
+      const key = b.dataset.sort;
+      if (f.sortKey === key) {
+        f.sortDir = f.sortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        f.sortKey = key;
+        f.sortDir = 'desc';
+      }
+      document.querySelectorAll('#fSort .sb').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      const arr = b.querySelector('.arr');
+      arr.textContent = f.sortDir === 'desc' ? '↓' : '↑';
+      renderScanner();
+    };
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
+async function boot() {
+  STATE.loading = true;
+  setLive(false, 'BOOT');
+
+  loadCfg();
+  renderExpBar();
+  initScannerControls();
+  updateTgStatusUI();
+  renderSigLog();
+  renderSigFeed();
+
+  try {
+    const ticker = await fetchTicker();
+    const tk = +ticker.lastPrice;
+    const chg = +ticker.priceChangePercent;
+
+    $('px').textContent = fmtP(tk);
+    $('chg').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    $('chg').className = 'chg ' + (chg >= 0 ? 'up' : 'dn');
+    $('hi').textContent = fmtP(+ticker.highPrice);
+    $('lo').textContent = fmtP(+ticker.lowPrice);
+    $('vol').textContent = (+ticker.quoteVolume / 1e3).toFixed(0) + 'K';
+
+    await fetchAll();
+    renderChips();
+    renderAll();
+    STATE.loading = false;
+
+    const summary = TF_LIST.map(tf => {
+      const n = STATE.data[tf] ? STATE.data[tf].candles.length : 0;
+      const d = (n * TF_MS[tf] / 86400000).toFixed(1);
+      return `${tf}:${n}c/${d}d`;
+    }).join(' · ');
+    sigLog(`Boot OK v4.2 · ${summary}`, 'ok');
+    sigLog(`Preset: ${PRESET_MODES[STATE.preset].name} · WKND ${STATE.weekendFilter ? 'ON' : 'OFF'} · KZ ${STATE.killZoneFilter ? 'ON' : 'OFF'} · REGIME ${STATE.regimeFilter ? 'TILT' : 'OFF'} · ENTRY ${STATE.entryMode.toUpperCase()}`, 'ok');
+
+    await bootCatchupSignals();
+
+    setLive(false, 'PROBING WS');
+    const probe = await probeWS();
+    if (probe.available) {
+      sigLog('WS available', 'ok');
+      connectWS();
+    } else {
+      sigLog('WS blocked — REST polling', 'warn');
+      startRestPolling();
+    }
+
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
+
+    if (STATE.tg.autoEnabled) startTgPolling();
+  } catch (e) {
+    console.error(e);
+    setLive(false, 'ERROR');
+    toast('Boot failed: ' + e.message);
+    sigLog('Boot failed: ' + e.message, 'err');
+    STATE.loading = false;
+  }
+}
+
+let resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    if (STATE.page === 'terminal') renderChart();
+  }, 180);
+});
+
+boot();
+</script>
+</body>
+</html>
